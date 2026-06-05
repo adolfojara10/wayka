@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+ * Wayka brand tokens (Tailwind v4 CSS-first config).
+ *
+ * Light/dark mode is class-based: <html class="dark"> activates dark theme.
+ * Theme-aware tokens (background/foreground) read from CSS variables that
+ * are swapped by the .dark rule below — so utilities like bg-background and
+ * text-foreground "just work" in both themes, with zero layout shift.
+ * --------------------------------------------------------------------------- */
+
+@theme {
+  /* Shared brand palette (identical in light & dark). */
+  --color-cream: #f3ebdf;
+  --color-ink: #060419;
+  --color-terracotta: #af5d25; /* Primary action — "Pedir Ya" */
+  --color-wine: #932aa0; /* Secondary highlight */
+  --color-olive: #676127; /* Secondary highlight */
+
+  /* Theme-aware tokens (defaults = light). */
+  --color-background: #f3ebdf;
+  --color-foreground: #060419;
+
+  /* Typography — Montserrat is injected via next/font as a CSS variable. */
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Switch dark variant from prefers-color-scheme to a .dark class on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Token swap for dark mode. */
+.dark {
+  --color-background: #060419;
+  --color-foreground: #f3ebdf;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

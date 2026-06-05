@@ -1,0 +1,72 @@
+# ============================================================
+# Wayka — root .gitignore (Python + Node + macOS + editors)
+# ============================================================
+
+# --- Environment files ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# --- Python / Django ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+.installed.cfg
+*.egg
+
+# Django runtime
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+*.log
+
+# Test / coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.tox/
+coverage.xml
+
+# --- Node / Next.js / pnpm ---
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo/
+.vercel/
+.pnpm-store/
+*.tsbuildinfo
+
+# Test coverage (frontend)
+coverage/
+
+# --- macOS / editors / misc ---
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+.idea/
+*.swp
+*.swo
+*~
+
+# VS Code: allow shared settings, ignore everything else
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json

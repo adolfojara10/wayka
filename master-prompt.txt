@@ -1,0 +1,301 @@
+Here's the complete, fully integrated blueprint with everything folded in.
+
+---
+
+# Master Blueprint v6: Project Wayka
+
+## 📌 How to Use This Document
+This is the master specification for an AI agentic coding assistant. **Section 0 (Master Vision)** should be provided as persistent context for every session. **Sections P1–P5** are sequential phase prompts — complete, review, and confirm each phase before moving to the next. Do not skip ahead. **Sections 6–8** are cross-cutting references (testing, deferred items, analytics spec) to consult throughout.
+
+---
+
+## 0. MASTER VISION (Persistent Context — Always Apply)
+
+### Who You Are
+You are an expert full-stack developer, software architect, and technical SEO specialist. You write **clean, modular, well-documented, production-quality code**. You ask before running initialization commands or making irreversible changes.
+
+### What We're Building
+**"Wayka"** — an artisanal catering, sweets, and frozen-product retail business in **Costa Rica**. The website must feel **warm, human, familiar, and artisanal** — never cold, corporate, or "Amazon-like." The identity is rooted in organic, rustic, ancestral values (see `wayka.pdf`).
+
+### Non-Negotiable Principles (apply to everything)
+1. **Minimum clicks, minimum scrolling** — the client's core UX rule.
+2. **Mobile-first** — most Costa Rican traffic is mobile.
+3. **SEO & performance are first-class concerns** — server-rendered HTML, optimized Core Web Vitals, Spanish-language local SEO.
+4. **Accessibility** — WCAG AA contrast and semantics.
+5. **No payment gateway** — all orders funnel to **WhatsApp** with structured, human messages.
+6. **Client-manageable** — the business owner manages all content via django-admin without touching code.
+7. **Measurement is built-in, not bolted-on** — every WhatsApp redirect is a tracked conversion event from day one. Analytics must be privacy-conscious and lightweight (no impact on Core Web Vitals).
+
+### Tech Stack
+- **Frontend:** Next.js (React, **App Router**, Server Components + Metadata API) + Tailwind CSS + Framer Motion.
+- **Backend:** Django + Django REST Framework (DRF) + Python.
+- **Database (Phase 1):** local SQLite (`db.sqlite3`).
+- **Media (Phase 1):** local Django media root (no cloud storage yet).
+- **Analytics:** GA4 (custom events) + Google Search Console + Microsoft Clarity. Meta Pixel deferred unless ads are confirmed.
+- **Repo:** Monorepo (`frontend/` + `backend/`).
+
+### Brand Design System (Dual Light/Dark Mode — from wayka.pdf)
+Configure Tailwind with the `'class'` dark-mode strategy (manual toggle, defaulting to `prefers-color-scheme`). Verify AA contrast.
+
+| Token | Light Mode | Dark Mode |
+|---|---|---|
+| Background | `#F3EBDF` (Cream) | `#060419` (Deep blue-black) |
+| Text & Headings | `#060419` | `#F3EBDF` |
+
+**Shared accent colors (identical in both modes):**
+- Primary action ("Pedir Ya"): `#AF5D25` (Terracotta)
+- Secondary highlights/badges: `#932AA0` (Wine/Purple) or `#676127` (Olive Green)
+- **Typography:** 'Montserrat' (load via `next/font` for zero layout shift).
+
+### Repository Structure
+```
+wayka/
+├── frontend/          # Next.js app
+├── backend/           # Django + DRF
+├── docs/              # wayka.pdf, brand assets, docs
+├── .github/           # workflows, issue/PR templates
+├── .gitignore         # covers Python + Node + media + db
+├── .env.example       # both frontend & backend vars (no real values)
+├── README.md
+└── LICENSE
+```
+
+---
+
+## P1 — Foundation & Repository Scaffolding
+
+**Goal:** A clean monorepo that runs locally, with both themes working and the SEO/CI foundation in place.
+
+### Tasks
+1. Scaffold the monorepo structure above.
+2. **Backend:** Initialize Django + DRF project in `backend/`, configured for local SQLite and local media root. Set up CORS for the frontend.
+3. **Frontend:** Initialize Next.js (App Router) + Tailwind + Framer Motion in `frontend/`. Configure Tailwind with the full dual-theme color tokens and Montserrat font.
+4. Build an **animated Light/Dark theme toggle** (Framer Motion) with no layout shift, respecting `prefers-color-scheme` and persisting the user's choice.
+5. **Repo hygiene:**
+   - `.gitignore` covering Python (`__pycache__`, `venv/`, `db.sqlite3`, `media/`, `.env`) and Node (`node_modules/`, `.next/`, `.env.local`).
+   - `.env.example` for both apps (WhatsApp number, `NEXT_PUBLIC_API_URL`, Django `SECRET_KEY`, analytics IDs, etc.).
+   - `README.md` with step-by-step local setup for both apps.
+   - **Conventional Commits** convention + brief `CONTRIBUTING.md`.
+6. **CI (`.github/workflows/ci.yml`):** path-filtered jobs — backend (lint with `ruff`, run tests) and frontend (`lint` + `build`). Triggered on push and PR.
+7. **Tooling:** ESLint + Prettier (frontend); `ruff` + `black` (backend).
+
+### Tests (Phase 1)
+- Backend: a trivial smoke test confirming the Django test runner works and the app boots.
+- Frontend: confirm `npm run build` succeeds and a basic render test of the theme toggle (toggles class, persists state).
+
+**✅ Stop and confirm with me before proceeding to P2.**
+
+---
+
+## P2 — Data Models, States & Admin (Backend Core)
+
+**Goal:** The full content model with lifecycle states and portion variants, fully manageable in django-admin.
+
+### Models
+
+**`Product`**
+- `name`, `description`, `category` (choices: `bocaditos`, `sweets`, `pizzas`)
+- **`status`** (choices):
+  - `active` — visible **and** orderable (shows "Pedir Ya" / "Añadir a mis antojos")
+  - `coming_soon` — visible, shows **"Próximamente"** badge, ordering **disabled**
+  - `sold_out` — visible, shows **"Agotado"** badge, ordering **disabled**
+  - `inactive` — **hidden** from the website entirely (admin-only)
+- `display_order` (integer) — controls order within category
+- `is_featured` (boolean) — optionally pin to top of category
+- `image`
+- **SEO fields:** `slug` (auto-generated from name, unique), `meta_description`, `alt_text`
+- **No single price here** — price lives on variants.
+
+**`ProductVariant`** (portion sizes — included in MVP)
+- `product` (FK, `related_name="variants"`)
+- `name` (e.g., "Pequeña", "Mediana", "Familiar")
+- `price` (DecimalField, in CRC ₡)
+- `is_default` (boolean)
+- `is_available` (boolean) — **per-variant availability** (a "Familiar" can be sold out while "Mediana" is available)
+- `display_order` (integer)
+
+**`Supermarket`**
+- `name`, `address`, `province`/`canton`, optional geo-coordinates.
+
+### Business Rules
+- A product with **one** variant → frontend shows the price directly, no size selector.
+- A product with **multiple** variants → frontend shows a size selector; user must choose before adding to the Antojo Cart.
+- **Sort logic:** within a category, order by `is_featured` (featured first), then `display_order`. **Unavailable items (`coming_soon`, `sold_out`) sort to the bottom.**
+
+### Admin
+- Customize django-admin so the client manages everything code-free.
+- **Drag-and-drop reordering** for `display_order` if feasible (e.g., `django-admin-sortable2`); otherwise an editable order field.
+- Inline editing of `ProductVariant` within the `Product` admin page.
+- Clear Spanish labels for status choices.
+
+### Tests (Phase 2)
+- Model tests: slug auto-generation & uniqueness; status choices; variant relationships.
+- Business-logic tests: sort ordering (featured first, unavailable last); single-vs-multi variant detection.
+- Admin smoke test: product + inline variants save correctly.
+
+**✅ Stop and confirm before P3.**
+
+---
+
+## P3 — REST API & SEO Data Layer
+
+**Goal:** Clean, documented API endpoints that power the frontend and feed SEO metadata.
+
+### Endpoints
+- `GET /api/products/` — public catalog. **Excludes `inactive`.** Supports `?category=` filtering. Returns nested variants. Sorted per the rules in P2.
+- `GET /api/products/<slug>/` — single product detail (by slug, for SEO-friendly URLs).
+- `GET /api/supermarkets/` — store locations.
+
+### Serializer Requirements
+- Each product returns its `status`, `is_featured`, all SEO fields, and nested available variants.
+- Expose a computed `is_orderable` flag (`true` only when `status == active`) so the frontend doesn't re-implement the rule.
+- Prices serialized in CRC ₡ format.
+
+### Tests (Phase 3)
+- API tests: `inactive` products never appear; category filter works; ordering is correct; slug lookup works; `is_orderable` is accurate for each status.
+- Serializer tests: variants nest correctly; SEO fields present.
+
+**✅ Stop and confirm before P4.**
+
+---
+
+## P4 — Frontend Experience (The Heart of Wayka)
+
+**Goal:** The warm, human, low-friction UX — built mobile-first with full theme support.
+
+### 4.1 Home / Landing
+- Visual hero with welcoming, **SEO-friendly Spanish bio**.
+- Animated theme toggle (from P1).
+- Above the fold (minimal scroll): **2 clear navigation views** separating **B2C catalog** from the **B2B event planner**.
+
+### 4.2 B2C Catalog Tabs
+Three instant-switching tabs (no page reload), each also reachable via a crawlable server-rendered URL for SEO:
+1. **Bocaditos**  2. **Sweets**  3. **Pizzas**
+
+### 4.3 Product Cards (state-aware)
+- Render badges based on `status`: "Próximamente", "Agotado".
+- **"Pedir Ya"** and **"Añadir a mis antojos"** buttons appear **only when `is_orderable`**; otherwise disabled/hidden.
+- Size selector appears only when multiple variants exist; respects per-variant `is_available`.
+
+### 4.4 "La Bolsa de Antojos" (Antojo Cart)
+- Drawer/modal, theme-aware, conversational tone (e.g., *"Te estás llevando un excelente combo, ¡te va a encantar!"*).
+- "Pedir Ya" instantly opens the cart with that item.
+- Cart line items show selected variant (e.g., "Pizza Artesanal (Familiar)").
+- **Final CTA → WhatsApp redirect** (no payment). Build a dynamic URL with a structured, human message:
+  > *"¡Hola Wayka! Me gustaría coordinar el pedido de estos antojos:\n- 2x Pizza Artesanal (Familiar)\n- 1x Pie de Limón\n¿Me ayudan a coordinar el envío?"*
+
+### 4.5 B2B Event Planner & Catering Calculator
+- Inputs: **event type** (Corporate, Birthday, Family Gathering) + **number of guests**.
+- Logic: recommend catering volume (e.g., 5 snacks/guest).
+- CTA: **"Coordinar este menú por WhatsApp"** — forwards the calculation details to WhatsApp.
+
+### 4.6 Analytics Wiring (foundational — build the utility now)
+- Create the centralized analytics utility (`lib/analytics.ts`) per **Section 8**. All CTAs built in this phase (Pedir Ya, Antojo Cart, calculator) must call it — **never call `gtag` directly.**
+
+### Tests (Phase 4)
+- Component tests: product card renders correct buttons/badges per status; size selector logic; unavailable variants disabled.
+- Cart tests: add/remove items, quantity, variant selection, **correct WhatsApp URL/message generation**.
+- Calculator tests: correct volume math; correct WhatsApp message.
+- Theme test: cart and cards render correctly in both modes.
+- Analytics test: each CTA calls the analytics utility with the correct event + parameters (mock the utility).
+
+**✅ Stop and confirm before P5.**
+
+---
+
+## P5 — SEO Hardening, Analytics & Launch Readiness
+
+**Goal:** Maximize discoverability in the Costa Rican market, complete measurement, and finalize quality.
+
+### 5.1 SEO Tasks
+- `<html lang="es-CR">`.
+- Dynamic `metadata` per route (title, description) via Next.js Metadata API, pulling from product SEO fields.
+- **Open Graph + Twitter cards** (critical for WhatsApp link previews).
+- **JSON-LD structured data:** `LocalBusiness`/`FoodEstablishment` (with address, hours, contact), `Product` (price in CRC, availability tied to status), `BreadcrumbList`.
+- Auto-generated `sitemap.ts` and `robots.ts`.
+- Clean Spanish slugs; canonical URLs.
+- Optimized images via `next/image` (WebP/AVIF, lazy load); keyword-aware Spanish `alt` text.
+- Single `<h1>` per page; logical heading hierarchy.
+- Verify Core Web Vitals (LCP, CLS — especially no shift on theme toggle, INP).
+
+### 5.2 Analytics & Measurement
+- **GA4 integration** via `next/third-parties` (or equivalent) for optimal loading — must not degrade Core Web Vitals. Gate on a consent-aware, privacy-conscious setup.
+- **Custom event tracking** for every WhatsApp redirect — this is the **critical conversion metric** since the funnel completes off-site. Implement all events per the **Event Specification (Section 8)**.
+- **Google Search Console** — scaffold the domain verification placeholder (meta tag or DNS) and submit `sitemap.xml`.
+- **Microsoft Clarity** — integrate for heatmaps + session recordings (free, validates the "minimum clicks/scrolling" rule).
+- **Meta Pixel** — scaffold a clearly-commented, **disabled placeholder** so it can be activated later if Instagram/Facebook ads launch (huge channel in Costa Rica).
+- Centralize all tracking IDs in environment variables (`NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_CLARITY_ID`, etc.) — never hardcode.
+
+### Tests (Phase 5)
+- Metadata test: each route outputs unique, correct title/description.
+- Structured data: valid JSON-LD; Product availability reflects status (`coming_soon`/`sold_out` ≠ in stock).
+- Sitemap includes all active product/category routes and excludes `inactive`.
+- Analytics util test: each WhatsApp CTA calls the tracking function with the correct event name and parameters (mock `gtag`).
+- Verify no tracking fires for disabled placeholders (Meta Pixel).
+- Confirm analytics scripts load via the performance-optimized method and don't block render.
+- Lighthouse/accessibility check: AA contrast in both themes; mobile performance.
+
+**✅ Final review.**
+
+---
+
+## 6. Testing Strategy (Cross-Cutting)
+- **Backend:** `pytest` or Django's test runner — models, business logic, API, serializers. Aim for meaningful coverage of state and ordering logic.
+- **Frontend:** Vitest/Jest + React Testing Library for components and cart/calculator logic; the WhatsApp message generator is **critical-path** and must be thoroughly tested.
+- **CI:** all tests run on every push/PR (path-filtered per app).
+- **(Optional, later phase):** Playwright end-to-end test of the full "browse → add to antojos → WhatsApp" flow.
+
+---
+
+## 7. Deferred to Phase 2 (Not Now — Note for Planning)
+SQLite → managed PostgreSQL · local media → cloud storage (Cloudinary/S3) · split deployment (Vercel frontend + Railway/Render backend) · production env vars, `ALLOWED_HOSTS`, CORS, `collectstatic` · Google Business Profile setup · Meta Pixel activation (if/when ads launch) · server-side event tracking for higher accuracy · CRM integration to replace the manual WhatsApp sales log.
+
+---
+
+## 8. Analytics Event Specification
+
+> Implement a single, centralized analytics utility (e.g., `lib/analytics.ts`) that wraps `gtag`. **All components must call this utility — never call `gtag` directly.** This keeps tracking consistent, testable, and easy to extend.
+
+### Core Conversion Event
+
+**`whatsapp_order_click`** — fires on **every** WhatsApp redirect.
+
+| Parameter | Type | Description | Example |
+|---|---|---|---|
+| `source` | string | Which CTA triggered it | `pedir_ya` \| `antojo_cart` \| `catering_calculator` |
+| `item_count` | number | Number of distinct items | `3` |
+| `total_quantity` | number | Sum of all quantities | `5` |
+| `category` | string | Dominant/primary category | `pizzas` \| `sweets` \| `bocaditos` \| `mixed` |
+| `estimated_value_crc` | number | Total estimated value in ₡ | `12500` |
+
+### Supporting Engagement Events
+
+| Event | When it fires | Key parameters |
+|---|---|---|
+| `view_product` | Product card/detail viewed | `product_slug`, `category`, `status` |
+| `add_to_antojos` | "Añadir a mis antojos" clicked | `product_slug`, `variant_name`, `price_crc` |
+| `open_cart` | Antojo Cart drawer opened | `source` (`pedir_ya` \| `manual`), `item_count` |
+| `remove_from_antojos` | Item removed from cart | `product_slug`, `variant_name` |
+| `select_variant` | Size/portion selected | `product_slug`, `variant_name` |
+| `category_tab_switch` | B2C tab changed | `from_category`, `to_category` |
+| `calculator_used` | B2B calculator produces a result | `event_type`, `guest_count`, `recommended_items` |
+| `theme_toggle` | Light/Dark switched | `to_theme` (`light` \| `dark`) |
+
+### North-Star Funnel
+```
+view_product → add_to_antojos → open_cart → whatsapp_order_click → [confirmed order — off-site]
+   (GA4)          (GA4)           (GA4)          (GA4)              (WhatsApp labels + sales log)
+```
+
+> **Off-site closing the loop (manual, not code):** Wayka uses **WhatsApp Business labels** ("Nuevo pedido", "Cotización", "Cerrado") + a simple sales log to record actual confirmed orders and ₡ value. GA4 measures intent up to the WhatsApp click; the WhatsApp side measures the real outcome. Document this clearly in the README so the client understands the two halves.
+
+---
+
+### First Action
+Begin with **P1**. Propose the exact scaffolding commands and folder layout, then **ask me for confirmation before executing anything.**
+
+---
+
+That's the complete v6 blueprint — vision, five sequential phases, testing throughout, a full analytics spec, and a clean Phase 2 deferral list.
+
+Want me to now generate the **starter code** for the highest-leverage pieces: the Django models + DRF serializers (P2/P3) and the `lib/analytics.ts` utility + WhatsApp URL builder (P4)? That would give you ready-to-paste foundations for the trickiest parts.
