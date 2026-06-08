@@ -24,7 +24,81 @@ Entry template:
 
 ---
 
-## 2026-06-08 — Brand assets landed + docs sync (uncommitted · phase: P1)
+## 2026-06-08 — SVG twins for every brand asset (uncommitted · phase: P1)
+
+**Shipped**
+
+- New `docs/svg/` tree mirrors the existing PNG folders. Every PNG now
+  has two SVG companions: a readable `<name>.svg` and a minified
+  `<name>.min.svg` for shipping.
+  - `docs/svg/variaciones de color en png/` — 16 lossless vector
+    extractions from the Illustrator source (the `.ai` and proof
+    `.pdf` are both PDF, so each color variant is one page).
+  - `docs/svg/Logo png sin fondo/` — 4 lossless extractions
+    (pages 17–20 of the same source).
+  - `docs/svg/B&W/` — 4 lossless extractions (pages 21–24).
+  - `docs/svg/letras separadas wayka/` — 4 SVGs **traced** from PNG
+    with `potrace` (no separate vector source available). Letter
+    SVGs use `fill="currentColor"` so they inherit color via CSS.
+- `scripts/svg_from_brand_assets.sh` — single command that
+  regenerates the entire `docs/svg/` tree from the source PDF + PNGs.
+  Idempotent.
+- `scripts/clean_svg.py` — stdlib-only post-processor that strips
+  Illustrator/Inkscape metadata, removes fixed `width`/`height` on
+  the root `<svg>` (so they scale via CSS while keeping the 0 0 792
+  792 viewBox), and guarantees the SVG namespace.
+- New system dependencies installed via Homebrew: `pdf2svg`,
+  `potrace`, `netpbm`. SVGO 4.0.1 runs via `pnpm dlx` (no global
+  Node install).
+- Doc updates:
+  - `docs/README.md` — new "SVG versions" section explaining
+    provenance (lossless vs traced), file layout, and a context →
+    format picking table.
+  - `AGENTS.md` §4 — `docs/svg/` and `scripts/` added to the repo
+    layout tree.
+  - Root `README.md` — repo-structure block updated to include
+    `scripts/` and the SVG twins.
+
+**Verified**
+
+- ✅ Page → variant mapping confirmed by color analysis (page 1 has
+  the wine background + cream letters; page 17 has only cream — i.e.
+  transparent variant; page 21 has only pure black + white — the B&W
+  variant). Mapping is `page N = ...-NN.png` across all 24 pages.
+- ✅ All 24 lossless SVGs contain zero `<image>` tags — they are true
+  vector, no embedded rasters or font references that would fail in
+  the browser.
+- ✅ 4 letter SVGs visually compared against their PNG originals in
+  Safari; trace fidelity is high for the solid letterforms.
+- ✅ Final footprint: 28 source SVGs (~460 KB combined) + 28
+  minified SVGs (~340 KB combined), total ~800 KB for the whole
+  `docs/svg/` tree. SVGO compression averages ~60 % size reduction
+  on the lossless set.
+- No code under `backend/` or `frontend/` changed; the green CI from
+  the previous commits still applies.
+
+**Deferred / known issues**
+
+- Wiring any SVG into `frontend/public/` and the landing page — still
+  Phase 2, per the scope boundary from the previous entry.
+- Favicon set + OG image generation — still Phase 2 (see
+  `TESTING_CHECKLIST.md` §B.7).
+- Letter SVGs are traced approximations, not lossless. If you later
+  surface a true `.ai` source for the letter frames, re-run
+  `scripts/svg_from_brand_assets.sh` after extending it to also
+  extract from that PDF; quality will jump from "good" to "perfect."
+- `LICENSE` file still unresolved.
+
+**Next**
+
+- Still awaits user sign-off on P1.
+- Phase 2 work will be the first real consumer of these SVGs (logo
+  on hero, favicon set generated from a chosen variant, animated
+  W·A·Y·K·A reveal using the four letter SVGs).
+
+---
+
+## 2026-06-08 — Brand assets landed + docs sync (`477fd7b` · phase: P1)
 
 **Shipped**
 

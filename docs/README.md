@@ -18,6 +18,40 @@ every folder.
 
 ---
 
+## SVG versions
+
+Every PNG in this folder also has an SVG twin under `docs/svg/`, mirroring
+the same subfolder names. For each variant we ship two files:
+
+- `<name>.svg` — readable, prettified output. Use when you want to inspect
+  or tweak by hand.
+- `<name>.min.svg` — SVGO-minified, single-line. Ship this one.
+
+**Provenance.** The 24 logo variants (color / transparent / B&W) are
+**lossless** vector extractions from `variaciones de color en png/wayka logo
+variaciones color .pdf` (the Illustrator source — `.ai` is a PDF wrapper).
+The 4 letter frames under `letras separadas wayka/` are **traced** from PNG
+with potrace because we do not have a separate vector source for them; the
+shapes are simple solid letterforms so trace fidelity is high. The letter
+SVGs use `fill="currentColor"` so they inherit color via CSS.
+
+**Regenerate** with `scripts/svg_from_brand_assets.sh` (requires
+`brew install pdf2svg potrace netpbm`; SVGO runs via `pnpm dlx`).
+
+### When to prefer SVG over PNG
+
+| Context                                  | Use       |
+| ---------------------------------------- | --------- |
+| Landing hero (any size, retina-crisp)    | SVG       |
+| Animated W·A·Y·K·A reveal                | SVG (letters) |
+| Favicon source (regenerate all sizes from it) | SVG  |
+| In-app UI icons / decorative chrome      | SVG       |
+| Email signatures (clients vary in SVG support) | PNG |
+| OG / Twitter cards (1200×630 raster spec) | PNG      |
+| Print collateral (designers expect raster fallback) | PNG |
+
+---
+
 ## Asset folders
 
 All four folders below were exported from the same Illustrator source
@@ -81,7 +115,11 @@ before shipping — especially if the logo sits next to text.
 
 1. Drop it in the appropriate folder above (or create a new folder
    with a clear, Spanish-friendly name and document it here).
-2. Update this README's tables.
-3. If the asset changes how a brand color is used, recompute
+2. If the new asset is a PNG that has a vector source, also produce
+   an SVG twin under `docs/svg/` — re-run
+   `scripts/svg_from_brand_assets.sh` (or extend it) so the generation
+   stays reproducible.
+3. Update this README's tables.
+4. If the asset changes how a brand color is used, recompute
    `contrast.md`.
-4. Append a row to `PROGRESS.md`.
+5. Append a row to `PROGRESS.md`.

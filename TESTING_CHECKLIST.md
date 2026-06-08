@@ -108,32 +108,42 @@ These items consume the assets that landed in `docs/` on 2026-06-08
 (see `docs/README.md`). None of them are in P1 scope; they belong to
 Phase 2 (catalog + imagery). Tracked here so they aren't lost.
 
+- [x] **SVG twins generated for every PNG variant** —
+  `docs/svg/<same subfolders>/` holds 28 source SVGs + 28 minified
+  via `scripts/svg_from_brand_assets.sh` (2026-06-08). Lossless for
+  the 24-variant set, traced for the 4 letter frames.
 - [ ] Pick primary logo variant for **light** backgrounds (cream)
-  from `docs/variaciones de color en png/`; copy to
-  `frontend/public/brand/` with a stable filename.
+  from `docs/svg/variaciones de color en png/`; copy to
+  `frontend/public/brand/` with a stable filename. Prefer the
+  `.min.svg`.
 - [ ] Pick primary logo variant for **dark** backgrounds (ink) from
   the same folder; verify it stays legible on `#060419`.
-- [ ] Pick **transparent** variant from `docs/Logo png sin fondo/`
+- [ ] Pick **transparent** variant from `docs/svg/Logo png sin fondo/`
   for use over product photography.
-- [ ] Pick **B&W** fallback from `docs/B&W/` for single-color
+- [ ] Pick **B&W** fallback from `docs/svg/B&W/` for single-color
   contexts (email signature, print, watermark).
 - [ ] Replace the text wordmark in `frontend/src/app/page.tsx` with
-  a `next/image` rendering of the chosen logo (lazy SSR-friendly,
-  no layout shift). Spanish `alt` drafted.
-- [ ] Generate the full favicon set from the chosen logo: `.ico`,
+  a `next/image` (or inline `<svg>`) rendering of the chosen logo
+  (lazy SSR-friendly, no layout shift). Spanish `alt` drafted.
+- [ ] Generate the full favicon set from the chosen logo SVG: `.ico`,
   16×16, 32×32, 180×180 (apple-touch), 192×192, 512×512, and a
   maskable 512×512 with safe-zone padding. Wire via Next 16
   metadata `icons` config (read the bundled Next docs first).
 - [ ] Pick / produce the OG + Twitter card source image (1200×630).
-  Decide whether to use a logo variant on `cream`/`ink` or a real
-  product photo. Wire via Next 16 metadata `openGraph` config.
-- [ ] Decide whether to use the frames in
-  `docs/letras separadas wayka/` for a Framer Motion staggered
-  W·A·Y·K·A reveal on the hero. If yes, prototype with
+  Decide whether to render a logo SVG onto a `cream`/`ink` canvas or
+  use a real product photo. Wire via Next 16 metadata `openGraph`
+  config.
+- [ ] Decide whether to use the four SVGs in
+  `docs/svg/letras separadas wayka/` for a Framer Motion staggered
+  W·A·Y·K·A reveal on the hero. They use `fill="currentColor"` so
+  themeing comes free. If yes, prototype with
   `prefers-reduced-motion` respected.
 - [ ] Cross-check every chosen logo + background pair against
   `docs/contrast.md`. If a new color emerges, recompute ratios and
   update that file before merging.
+- [ ] Visual fidelity sanity check of `docs/svg/` in Safari + Firefox
+  + Chrome at 24px, 96px, 512px sizes (especially the traced letter
+  SVGs — they're potrace approximations of solid letterforms).
 
 ---
 

@@ -93,10 +93,14 @@ wayka/
 │   ├── README.md                       ← index of all assets below
 │   ├── contrast.md                     ← WCAG ratios + usage rules
 │   ├── wayka.pdf                       ← master brand & vision doc
-│   ├── B&W/                            ← B/W logo variants
-│   ├── Logo png sin fondo/             ← transparent-background logos
-│   ├── letras separadas wayka/         ← individual letter marks (for animation)
-│   └── variaciones de color en png/    ← full-color logo variants + .ai source
+│   ├── B&W/                            ← B/W logo variants (PNG)
+│   ├── Logo png sin fondo/             ← transparent-bg logos (PNG)
+│   ├── letras separadas wayka/         ← individual letter marks (PNG, for animation)
+│   ├── variaciones de color en png/    ← full-color logo variants + .ai source
+│   └── svg/                            ← SVG twins of all of the above (.svg + .min.svg)
+├── scripts/                 ← reproducible asset/codegen scripts
+│   ├── svg_from_brand_assets.sh        ← regenerate docs/svg/ from PDF + PNGs
+│   └── clean_svg.py                    ← strip AI/Inkscape metadata
 ├── backend/                 ← Django + DRF
 │   ├── venv/                ← gitignored
 │   ├── manage.py
