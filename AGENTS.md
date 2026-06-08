@@ -219,18 +219,20 @@ types: `feat`, `fix`, `chore`, `docs`, `refactor`, `perf`, `test`,
   `107d936`).
 - ✅ **Phase 2 — Data Models, States & Admin (Backend Core)** —
   complete (commit `8d6c366`).
-- 🛠️ **Phase 3 — REST API & SEO Data Layer** — implemented;
-  awaits user sign-off. Public read-only API shipped at
-  `/api/products/`, `/api/products/<slug>/`, `/api/supermarkets/`
-  with Schema.org-aligned `availability` enum, dual-shape prices
-  (numeric + formatted CRC), `Content-Language: es-CR`,
-  `Cache-Control: public, max-age=60, s-maxage=300`, and **404 on
-  inactive/unknown slugs** (the SEO-critical contract). OpenAPI
-  schema + Swagger UI + Redoc auto-generated via drf-spectacular
-  (`/api/schema/`, `/api/docs/`, `/api/redoc/`). 36 new tests,
-  62 total backend tests green. See `PROGRESS.md` for details.
-- ⏭️ **Phase 4 — Frontend Experience** — not yet started;
-  awaits P3 sign-off.
+- ✅ **Phase 3 — REST API & SEO Data Layer** — complete
+  (commit `9f331ee`).
+- 🛠️ **Phase 4 — Frontend Experience** — implemented;
+  awaits user sign-off. Server-rendered home + three crawlable
+  category routes (`/bocaditos`, `/sweets`, `/pizzas`) with
+  state-aware product cards, sessionStorage-backed Antojo Cart,
+  framer-motion drawer, spec-aligned WhatsApp message builder,
+  centralized analytics utility, Spanish 404, and `/catering`
+  placeholder. 31 new frontend tests (36 total, all green); `pnpm
+  build` succeeds. **Calculator + ThemeToggle analytics wiring
+  deferred to a follow-up patch (catering ratios blocked on
+  client).** See `PROGRESS.md` for details.
+- ⏭️ **Phase 5 — SEO Hardening, Analytics & Launch Readiness** —
+  not yet started; awaits P4 sign-off.
 
 ---
 

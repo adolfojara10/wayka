@@ -24,7 +24,183 @@ Entry template:
 
 ---
 
-## 2026-06-08 — Phase 3: public catalog API + OpenAPI docs (uncommitted · phase: P3)
+## 2026-06-08 — Phase 4: frontend catalog, cart, WhatsApp funnel (uncommitted · phase: P4)
+
+**Shipped**
+
+Routes (Next.js 16 App Router):
+- `/` — server-rendered home with the brand hero + two crawlable
+  navigation cards (B2C catalog vs B2B event planner), both above the
+  fold on a 390px viewport.
+- `/(catalog)/bocaditos`, `/sweets`, `/pizzas` — three real,
+  server-rendered category routes inside an unnamed route group so
+  the URLs stay short. Shared layout renders the `<CategoryTabs>`
+  once; tabs are `<Link>` components so Next prefetches sibling
+  routes and Googlebot sees three independent URLs.
+- Each category route has its own `loading.tsx` with a 6-card
+  skeleton (no layout shift when content arrives).
+- `/catering` — B2B placeholder. Calculator is deferred pending
+  client ratios; a direct WhatsApp CTA keeps the funnel alive.
+- `/not-found` — Spanish 404 (Next.js auto-injects
+  `<meta name="robots" content="noindex">`).
+- `dynamic = "force-dynamic"` on the three category routes so the
+  build doesn't try to prerender against the dev Django host.
+  Framework caching still kicks in via `next: { revalidate: 60 }`.
+
+Libraries (`frontend/src/lib/`):
+- `api-types.ts` — TS types mirroring the P3 serializers exactly
+  (Product, ProductVariant, Supermarket, status / category /
+  availability unions), plus `CATEGORY_LABELS` + `CATEGORIES`.
+- `api.ts` — server-side fetch wrappers (`getProducts`,
+  `getProduct`, `getSupermarkets`). `next: { revalidate: 60, tags:
+  ["catalog"] }` so P5 can bust the cache with one
+  `revalidateTag`. `getProduct` returns `null` on 404 so pages can
+  call `notFound()` cleanly.
+- `analytics.ts` — typed, centralized `track*` API matching the
+  master-prompt §8 spec literally. In dev / pre-GA4 wiring events
+  go to a bounded in-memory ring buffer (testable via
+  `__getRecordedEvents`). When `NEXT_PUBLIC_GA4_MEASUREMENT_ID` is
+  set, calls `window.gtag` (no-op if the script hasn't loaded).
+  **No component calls `gtag` directly.**
+- `whatsapp.ts` — `buildCartMessage`, `buildCateringMessage`,
+  `whatsappUrl`. Throws a typed `WhatsAppConfigError` when the
+  number env var is missing so callers can render a friendly
+  disabled state.
+- `format.ts` — `formatCrc` for client-side totals (mirrors the
+  Python `format_crc` exactly: NBSP separators, ROUND_HALF_UP).
+
+Components (`frontend/src/components/`):
+- `cart/AntojoCartProvider.tsx` — context + reducer + sessionStorage
+  hydration under `wayka-cart-v1`. One line per (slug, variantId).
+  Fires `trackAddToAntojos` on add, `trackRemoveFromAntojos` on
+  remove / qty→0, `trackOpenCart` on open. Open-source is captured
+  via a `useRef` so the analytics fire after the dispatch flushes
+  (fixed a closure-staleness bug where "Pedir Ya" reported
+  `item_count=0`).
+- `cart/AntojoCartTrigger.tsx` — header button with item-count
+  badge, opens with `source="manual"`.
+- `cart/AntojoCartDrawer.tsx` — right-side framer-motion drawer,
+  theme-aware. Conversational Spanish copy ("Te estás llevando un
+  excelente combo..."). Builds the WhatsApp URL with
+  `buildCartMessage` + `whatsappUrl`; final CTA fires
+  `trackWhatsAppOrderClick` with `source: "antojo_cart"` and the
+  aggregated `item_count` / `total_quantity` / `category` /
+  `estimated_value_crc`. Disabled CTA on empty cart;
+  friendly error when WhatsApp env var missing.
+- `cart/CartLineItem.tsx` — qty +/- controls + Quitar.
+- `catalog/StatusBadge.tsx` — "Próximamente" / "Agotado" pills with
+  brand-token colors (wine / olive on cream — both AA per
+  `docs/contrast.md`).
+- `catalog/SizeSelector.tsx` — radio group, per-variant
+  `is_available` respected (`aria-disabled`, `line-through`,
+  disabled `<input>`). Fires `trackSelectVariant` on change.
+- `catalog/ProductCard.tsx` — state-aware. `active` shows both CTAs
+  ("Pedir Ya" + "Añadir a mis antojos"); non-orderable hides both.
+  Size selector visibility uses the backend's server-computed
+  `has_multiple_variants` (frontend never re-derives the rule).
+  CTAs disabled if the currently-selected variant becomes
+  unavailable.
+- `catalog/CategoryGrid.tsx` — server-side presentational grid.
+- `catalog/CategoryLoadingSkeleton.tsx` — shimmer placeholder.
+- `layout/Header.tsx` — sticky header with wordmark (text for now,
+  SVG wiring still deferred per checklist B.7), cart trigger, theme
+  toggle.
+- `layout/Footer.tsx` — minimal Spanish footer.
+- `layout/CategoryTabs.tsx` — `<Link>`-based tabs highlighting the
+  active route via `usePathname()`.
+
+Root layout (`app/layout.tsx`) now wraps children in
+`<AntojoCartProvider>`, renders `<Header>` + `<Footer>`, and mounts
+the `<AntojoCartDrawer>` once. All theme behavior from P1 preserved.
+
+Tests — 31 new (36 total frontend tests, 2.6s)
+- `lib/__tests__/analytics.test.ts` (5): every track helper exports
+  with stable signatures; SSR-safe no-op; in-memory recording when
+  GA4 id empty; `gtag` called with the right shape when configured;
+  doesn't throw when `window.gtag` is missing.
+- `lib/__tests__/whatsapp.test.ts` (9): cart message matches the
+  spec quote (with the agreed with-parens divergence); always
+  includes parens for single-variant items; empty cart produces
+  valid greeting+closing; `whatsappUrl` strips non-digits + encodes
+  newlines as `%0A`; throws `WhatsAppConfigError` on missing /
+  invalid env var; catering builder includes event type + guest
+  count + total + breakdown + closing question.
+- `components/cart/__tests__/AntojoCartProvider.test.tsx` (8):
+  same product+variant added twice → one line, qty=2;
+  `updateQty(0)` removes + fires `trackRemoveFromAntojos`;
+  `clearCart` empties state AND clears sessionStorage;
+  `dominantCategory` derives correctly (single category vs
+  multi → `"mixed"`); `open("pedir_ya")` fires `trackOpenCart`
+  with correct source + post-add item count; hydrates from
+  sessionStorage; ignores corrupted sessionStorage gracefully;
+  throws helpful error when used outside provider.
+- `components/cart/__tests__/AntojoCartDrawer.test.tsx` (2):
+  WhatsApp URL built from cart matches spec char-for-char (decoded
+  from `%0A`); `trackWhatsAppOrderClick` fires with
+  `source: "antojo_cart"` + correct aggregates; empty cart shows
+  conversational copy + disabled CTA.
+- `components/catalog/__tests__/ProductCard.test.tsx` (7): active
+  shows both CTAs no badge; coming_soon hides CTAs + shows
+  "Próximamente"; sold_out hides CTAs + shows "Agotado"; single-
+  variant hides selector + shows inline price; multi-variant
+  shows selector + fires `trackSelectVariant`; unavailable variant
+  is `aria-disabled`; "Pedir Ya" adds + fires `trackOpenCart` with
+  source=pedir_ya + correct count.
+- Existing 5 ThemeToggle tests untouched (theme behavior unchanged).
+
+**Verified**
+
+Frontend (run from `frontend/`):
+- `pnpm lint` clean (ESLint).
+- `pnpm format:check` clean (Prettier + tailwind plugin).
+- `pnpm test:ci` — **36/36 in 2.6s**.
+- `pnpm build` succeeds (Next.js 16 + Turbopack); 6 routes generated
+  (`/`, `/_not-found`, `/catering` static; `/bocaditos`, `/sweets`,
+  `/pizzas` dynamic).
+
+Live (`backend runserver` + `pnpm start -p 3001`):
+- `GET /` returns SSR HTML with `<title>Wayka — Repostería y
+  catering artesanal</title>` and both navigation cards rendered.
+- `GET /pizzas` returns SSR HTML with both pizza product names
+  inline — `<h3>Pizza Margarita Artesanal</h3>` and
+  `<h3>Pizza Cuatro Quesos</h3>` are in the initial document so
+  Googlebot sees them on first crawl.
+- `GET /catering` returns the placeholder page with the WhatsApp
+  CTA copy.
+- `GET /does-not-exist` returns `404 Not Found`.
+- Backend `/api/health/` still 200 (P3 contract preserved).
+
+**Deferred / known issues**
+
+- **Catering calculator** — `/catering` ships as a Spanish
+  placeholder with a WhatsApp CTA. The interactive calculator
+  (event type × guest count → recommended pieces + structured
+  WhatsApp message) is blocked on the client confirming serving
+  ratios. Lands as a self-contained patch later.
+- **`trackThemeToggle` wiring** — the analytics utility exposes the
+  helper but `ThemeToggle.tsx` is not modified in P4 (deferred per
+  user decision; lands in P5).
+- **GA4 + Microsoft Clarity + Meta Pixel placeholder + Google
+  Search Console + sitemap.ts + robots.ts + full JSON-LD + OG image
+  generation** — all P5 scope.
+- **Logo asset wiring** — header still uses a text wordmark; the
+  SVG twins under `docs/svg/` are not wired into `frontend/public/`
+  (still deferred per `TESTING_CHECKLIST.md` §B.7).
+- **No CORS rejection test on the live API** — the call goes
+  server-to-server in SSR so CORS does not gate it; client-side
+  fetches are out of P4 scope.
+- `LICENSE` file still unresolved.
+
+**Next**
+
+- Phase 4 complete from this agent's side. Awaits user sign-off
+  before P5 (SEO hardening, analytics wiring, sitemap, robots,
+  JSON-LD, OG, Search Console, Lighthouse pass).
+- After P5 the deferred items above can land as small focused PRs.
+
+---
+
+## 2026-06-08 — Phase 3: public catalog API + OpenAPI docs (`9f331ee` · phase: P3)
 
 **Shipped**
 

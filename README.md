@@ -16,7 +16,9 @@ This repository is a monorepo containing the **Next.js** storefront and the
 ```
 wayka/
 ├── frontend/          # Next.js (App Router) + Tailwind + Framer Motion
+│   └── src/app/       # /, /bocaditos, /sweets, /pizzas, /catering, /not-found
 ├── backend/           # Django + DRF + SQLite (Phase 1)
+│   └── catalog/       # Product / ProductVariant / Supermarket + public API
 ├── docs/              # brand PDF + logo PNG variants + SVG twins + contrast notes
 ├── scripts/           # reproducible asset/codegen scripts (e.g. PNG→SVG)
 ├── .github/           # CI workflows + PR/issue templates

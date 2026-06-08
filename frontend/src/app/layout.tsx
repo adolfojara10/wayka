@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Montserrat } from "next/font/google";
 
+import { AntojoCartDrawer } from "@/components/cart/AntojoCartDrawer";
+import { AntojoCartProvider } from "@/components/cart/AntojoCartProvider";
+import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeScript } from "@/components/ThemeScript";
 
@@ -35,7 +39,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeScript />
       </head>
       <body className="min-h-full">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AntojoCartProvider>
+            <div className="flex min-h-dvh flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <AntojoCartDrawer />
+          </AntojoCartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

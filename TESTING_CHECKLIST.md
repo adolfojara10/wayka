@@ -191,6 +191,69 @@ Manual (your review checklist):
 - [ ] `Vary: Accept-Language` is present (defensive even though the
   site is Spanish-only; will matter once a CDN is in front).
 
+### B.8 Frontend catalog + Antojo Cart + WhatsApp funnel (Phase 4)
+
+Auto (CI) — covered by `pnpm test:ci`:
+- [x] `lib/__tests__/analytics.test.ts` — track helpers expose stable
+  signatures matching the master-prompt §8 spec; SSR-safe no-op;
+  in-memory recording when GA4 id empty; gtag called with correct
+  shape when configured; safe when gtag missing.
+- [x] `lib/__tests__/whatsapp.test.ts` — cart message format pins the
+  with-parens variant naming, single-variant case, empty case;
+  `whatsappUrl` strips non-digits + encodes newlines as `%0A` +
+  throws `WhatsAppConfigError` on missing/invalid number; catering
+  builder includes event type, guest count, total, breakdown.
+- [x] `components/cart/__tests__/AntojoCartProvider.test.tsx` — same
+  product+variant → one line w/ qty=2; `updateQty(0)` removes + fires
+  remove event; `clearCart` empties + clears sessionStorage;
+  `dominantCategory` derives correctly; `open('pedir_ya')` fires
+  with post-add item_count (regression-tested closure bug); hydration
+  from sessionStorage; ignores corrupted storage; throws outside
+  provider.
+- [x] `components/cart/__tests__/AntojoCartDrawer.test.tsx` —
+  WhatsApp URL char-for-char matches the spec quote with parens; CTA
+  click fires `trackWhatsAppOrderClick` with
+  `source: "antojo_cart"` and correct aggregates; empty cart shows
+  conversational copy + disabled CTA.
+- [x] `components/catalog/__tests__/ProductCard.test.tsx` — active
+  shows both CTAs no badge; coming_soon hides CTAs + shows
+  Próximamente; sold_out hides CTAs + shows Agotado; single-variant
+  inline price; multi-variant shows size selector + fires
+  `trackSelectVariant`; unavailable variant `aria-disabled`;
+  "Pedir Ya" → adds + `trackOpenCart({source:'pedir_ya'})` with
+  correct item_count.
+
+Manual (your review checklist — requires both servers running):
+- [ ] Hard refresh on `/bocaditos` shows the products **in the
+  initial HTML** (View Source). Same for `/sweets` and `/pizzas`.
+  Confirms server-side rendering — required for SEO.
+- [ ] Mobile (≤ 390px): both navigation cards on the home page are
+  reachable without scrolling.
+- [ ] Tab between `/bocaditos` → `/sweets` → `/pizzas` feels
+  instant; the URL changes; the active tab pill highlights the
+  current route; layout chrome (header, footer, tabs) does NOT
+  flash.
+- [ ] Adding a multi-variant product without picking a size uses the
+  default; switching size before "Pedir Ya" updates the cart line
+  correctly.
+- [ ] "Pedir Ya" opens the cart immediately with the chosen item.
+- [ ] "Añadir a mis antojos" silently adds; the header badge updates
+  count.
+- [ ] In the cart drawer, qty +/- updates totals; "Quitar" removes
+  the line; "Vaciar la bolsa" clears.
+- [ ] "Pedir por WhatsApp" opens WhatsApp Web / app with the
+  pre-built message (parens included for every line).
+- [ ] Closing the tab and reopening the site → cart is empty (we
+  use sessionStorage, not localStorage).
+- [ ] Reloading the tab keeps the cart contents (same session).
+- [ ] `/catering` placeholder copy is friendly and the WhatsApp CTA
+  opens with the generic event-planning message.
+- [ ] A URL that doesn't exist (e.g. `/not-a-real-page`) shows the
+  Spanish 404 page.
+- [ ] Theme toggle still works on every route (light → dark → system
+  cycle); no FOUC; no layout shift.
+- [ ] All Spanish copy reads naturally for a Costa Rica audience.
+
 ---
 
 ## B. Frontend — Next.js + Tailwind + Framer Motion
