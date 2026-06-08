@@ -62,6 +62,22 @@ docs/contrast-table
 
 ---
 
+## Tracking files (mandatory on every change)
+
+Before opening a PR (or asking the user to review), update:
+
+1. **`PROGRESS.md`** — append a new entry at the top describing what
+   shipped, what was verified, and what is deferred.
+2. **`TESTING_CHECKLIST.md`** — add new items for anything that
+   should be tested; tick items now covered by automated tests.
+
+If you touched colors, also re-compute and update `docs/contrast.md`.
+
+AI agents: also re-read `AGENTS.md` §10 — these updates are not
+optional.
+
+---
+
 ## Before you push
 
 1. **Backend**
