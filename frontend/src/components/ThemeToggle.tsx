@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useTheme } from "@/components/ThemeProvider";
@@ -96,21 +97,30 @@ export interface ThemeToggleProps {
  * - Cycles light → dark → system → light on each click.
  */
 export function ThemeToggle({ className }: ThemeToggleProps) {
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
-  const Icon = ICONS[theme];
-  const label = LABELS[theme];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // During SSR or before hydration, render a static fallback (the system theme)
+  // to avoid hydration mismatch errors.
+  const activeTheme = mounted ? theme : "system";
+  const Icon = ICONS[activeTheme];
+  const label = LABELS[activeTheme];
 
   return (
     <button
       type="button"
       onClick={() => {
-        const next = NEXT_CHOICE[theme];
+        const next = NEXT_CHOICE[activeTheme];
         setTheme(next);
         trackThemeToggle({ to_theme: next });
       }}
       aria-label={label}
       title={label}
-      data-theme-choice={theme}
+      data-theme-choice={activeTheme}
       className={[
         "relative inline-flex h-10 w-10 items-center justify-center",
         "border-foreground/15 rounded-full border",
@@ -124,7 +134,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
-          key={theme}
+          key={activeTheme}
           initial={{ opacity: 0, rotate: -45, scale: 0.6 }}
           animate={{ opacity: 1, rotate: 0, scale: 1 }}
           exit={{ opacity: 0, rotate: 45, scale: 0.6 }}

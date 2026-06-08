@@ -30,6 +30,7 @@ function apiHostPattern() {
 
 const nextConfig: NextConfig = {
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [apiHostPattern()],
   },
 };
