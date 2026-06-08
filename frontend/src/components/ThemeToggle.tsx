@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useTheme } from "@/components/ThemeProvider";
+import { trackThemeToggle } from "@/lib/analytics";
 import type { ThemeChoice } from "@/lib/theme";
 
 /**
@@ -102,7 +103,11 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   return (
     <button
       type="button"
-      onClick={() => setTheme(NEXT_CHOICE[theme])}
+      onClick={() => {
+        const next = NEXT_CHOICE[theme];
+        setTheme(next);
+        trackThemeToggle({ to_theme: next });
+      }}
       aria-label={label}
       title={label}
       data-theme-choice={theme}

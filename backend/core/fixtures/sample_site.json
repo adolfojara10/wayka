@@ -1,0 +1,91 @@
+[
+  {
+    "model": "core.sitesettings",
+    "pk": 1,
+    "fields": {
+      "business_name": "Wayka",
+      "primary_phone": "+50688887777",
+      "email": "hola@wayka.cr",
+      "street_address": "Avenida Central",
+      "address_locality": "Escazú",
+      "address_region": "San José",
+      "postal_code": "10201",
+      "country_code": "CR",
+      "latitude": "9.918500",
+      "longitude": "-84.139700",
+      "social_instagram_url": "https://instagram.com/wayka.cr",
+      "social_facebook_url": "https://facebook.com/wayka.cr",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "core.weekdayhours",
+    "pk": 1,
+    "fields": {
+      "settings": 1,
+      "day": 0,
+      "open_time": "09:00:00",
+      "close_time": "18:00:00"
+    }
+  },
+  {
+    "model": "core.weekdayhours",
+    "pk": 2,
+    "fields": {
+      "settings": 1,
+      "day": 1,
+      "open_time": "09:00:00",
+      "close_time": "18:00:00"
+    }
+  },
+  {
+    "model": "core.weekdayhours",
+    "pk": 3,
+    "fields": {
+      "settings": 1,
+      "day": 2,
+      "open_time": "09:00:00",
+      "close_time": "18:00:00"
+    }
+  },
+  {
+    "model": "core.weekdayhours",
+    "pk": 4,
+    "fields": {
+      "settings": 1,
+      "day": 3,
+      "open_time": "09:00:00",
+      "close_time": "18:00:00"
+    }
+  },
+  {
+    "model": "core.weekdayhours",
+    "pk": 5,
+    "fields": {
+      "settings": 1,
+      "day": 4,
+      "open_time": "09:00:00",
+      "close_time": "18:00:00"
+    }
+  },
+  {
+    "model": "core.weekdayhours",
+    "pk": 6,
+    "fields": {
+      "settings": 1,
+      "day": 5,
+      "open_time": "10:00:00",
+      "close_time": "14:00:00"
+    }
+  },
+  {
+    "model": "core.weekdayhours",
+    "pk": 7,
+    "fields": {
+      "settings": 1,
+      "day": 6,
+      "open_time": null,
+      "close_time": null
+    }
+  }
+]

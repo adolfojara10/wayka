@@ -71,7 +71,14 @@ export interface CalculatorUsedParams {
 }
 
 export interface ThemeToggleParams {
-  to_theme: "light" | "dark";
+  to_theme: "light" | "dark" | "system";
+}
+
+export interface WebVitalParams {
+  name: string;
+  value: number;
+  rating?: string;
+  id?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -173,4 +180,13 @@ export function trackCalculatorUsed(params: CalculatorUsedParams): void {
 
 export function trackThemeToggle(params: ThemeToggleParams): void {
   recordEvent("theme_toggle", { ...params });
+}
+
+/**
+ * Forwards a Core Web Vitals metric (LCP/CLS/INP/FCP/TTFB) through
+ * the analytics utility. Called by ``<WebVitalsReporter>`` via Next's
+ * ``useReportWebVitals`` hook.
+ */
+export function recordWebVital(params: WebVitalParams): void {
+  recordEvent("web_vital", { ...params });
 }

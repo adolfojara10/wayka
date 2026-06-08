@@ -16,9 +16,12 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest",
-    "test:ci": "vitest run"
+    "test:ci": "vitest run",
+    "lighthouse:home": "lighthouse http://localhost:3001/ --output=html --output-path=./lighthouse-home.html --chrome-flags=\"--headless=new\" --view",
+    "lighthouse:bocaditos": "lighthouse http://localhost:3001/bocaditos --output=html --output-path=./lighthouse-bocaditos.html --chrome-flags=\"--headless=new\" --view"
   },
   "dependencies": {
+    "@next/third-parties": "^16.2.7",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "next": "16.2.7",
@@ -38,6 +41,7 @@
     "eslint-config-next": "16.2.7",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^29.1.1",
+    "lighthouse": "^13.3.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4",

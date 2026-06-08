@@ -62,6 +62,35 @@ export interface Supermarket {
   longitude: string | null;
 }
 
+/** Day-of-week values match Python's ISO weekday-0-indexed convention (Mon=0..Sun=6). */
+export type WeekdayNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+export interface WeekdayHours {
+  day: WeekdayNumber;
+  day_label: string;
+  /** ISO time string `HH:MM:SS` or null for "closed". */
+  open_time: string | null;
+  close_time: string | null;
+}
+
+export interface SiteSettings {
+  business_name: string;
+  primary_phone: string;
+  email: string;
+  street_address: string;
+  address_locality: string;
+  address_region: string;
+  postal_code: string;
+  /** ISO 3166-1 alpha-2 (defaults to "CR"). */
+  country_code: string;
+  latitude: string | null;
+  longitude: string | null;
+  social_instagram_url: string;
+  social_facebook_url: string;
+  hours: WeekdayHours[];
+  updated_at: string;
+}
+
 /**
  * Display labels for each category, in Spanish. Single source of truth
  * for tabs, titles, navigation links, etc.

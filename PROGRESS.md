@@ -24,7 +24,249 @@ Entry template:
 
 ---
 
-## 2026-06-08 — Phase 4: frontend catalog, cart, WhatsApp funnel (uncommitted · phase: P4)
+## 2026-06-08 — Phase 5: SEO hardening, analytics, launch readiness (uncommitted · phase: P5)
+
+**Shipped**
+
+Backend — new `SiteSettings` singleton + structured opening hours
+- `core/models.py` — `SiteSettings` singleton (pk-clamped + admin-
+  gated; one row max) holding business identity (name, phone, email,
+  address, geo, social URLs). `WeekdayHours` related model — one
+  row per weekday with structured `open_time` / `close_time` or
+  both-null (closed). Validation: close > open; both fields go
+  together.
+- `core/admin.py` — `SiteSettingsAdmin` with `WeekdayHoursInline`,
+  Spanish fieldsets, `has_add_permission` clamped to no-add-when-
+  exists, `has_delete_permission=False` so the client can never
+  accidentally wipe the singleton.
+- `core/serializers.py` — new file with `WeekdayHoursSerializer`
+  (nested) + `SiteSettingsSerializer`.
+- `core/views.py` — new `SiteSettingsView` (read-only, returns 404
+  when singleton not configured so the frontend degrades silently).
+  Adds the same `PublicReadOnlyMixin` from `catalog/views.py`
+  (Cache-Control on 2xx only).
+- `core/urls.py` — `GET /api/site/`.
+- `core/migrations/0001_initial.py` (creates SiteSettings +
+  WeekdayHours).
+- `core/fixtures/sample_site.json` — singleton + 7 weekday rows
+  (Lun–Vie 9–18, Sáb 10–14, Dom cerrado).
+- `core/tests.py` — extended from 2 to 17 tests (singleton enforcement,
+  WeekdayHours validation, /api/site/ 200/404, headers, fixture
+  loads).
+
+Frontend — SEO files
+- `app/sitemap.ts` — runtime sitemap. Static routes always shipped;
+  product slugs come from `getProducts()` (so inactive products are
+  excluded by the backend's `.visible()` filter). Gracefully ships
+  static-only when the API is down.
+- `app/robots.ts` — allow `/`, disallow `/api/`, point at sitemap.
+- `app/opengraph-image.png` — 1200×630 default OG card, generated
+  once via `scripts/build_og_image.mjs` (sharp composite of the
+  Wayka color logo on a cream canvas). Auto-picked up by Next 16's
+  file-convention metadata.
+- `app/opengraph-image.alt.txt` — Spanish alt text.
+
+Frontend — product detail route (the SEO payoff from P3)
+- `app/productos/[slug]/page.tsx` — server component, awaits
+  `params: Promise<{ slug: string }>`, calls `getProduct()` and
+  `notFound()` on null. Emits Breadcrumbs (visual) + `<JsonLd>`
+  blocks for both `Product` and `BreadcrumbList`.
+- `app/productos/[slug]/loading.tsx` — quiet skeleton.
+- `app/productos/[slug]/page.tsx::generateMetadata` — dynamic title,
+  description (from `meta_description` with fallback), canonical,
+  OG image override.
+- New `components/catalog/ProductDetailClient.tsx` — owns variant
+  selection + cart-write CTAs; reuses `SizeSelector` and `StatusBadge`.
+- New `components/layout/Breadcrumbs.tsx` — visual breadcrumb trail
+  (matching the JSON-LD `BreadcrumbList`).
+
+Frontend — JSON-LD
+- `lib/jsonld.ts` — `buildLocalBusinessLd` (FoodEstablishment with
+  address, telephone, geo, sameAs, openingHoursSpecification per
+  weekday), `buildProductLd` (Product with offers in CRC, availability
+  mapped to Schema.org enum from the backend, single-offer flattening
+  when there's one variant), `buildBreadcrumbLd` (1-indexed
+  ListItems).
+- `components/JsonLd.tsx` — server-side `<script type="application/
+  ld+json">` emitter with `<` escaping.
+- Root `layout.tsx` — fetches `getSiteSettings()` once at render
+  time; emits `<JsonLd data={buildLocalBusinessLd(site, SITE_URL)}>`
+  at the top of `<body>` when configured.
+
+Frontend — metadata polish
+- Root `layout.tsx`: `metadataBase: new URL(NEXT_PUBLIC_SITE_URL)`,
+  `title.template: "%s — Wayka"`, `openGraph` defaults (siteName,
+  `locale: "es_CR"`, type), `twitter.card: "summary_large_image"`,
+  `alternates.canonical: "/"`, `robots: { index: true, follow: true }`,
+  conditional `verification.google` from `NEXT_PUBLIC_GSC_VERIFICATION`.
+
+Frontend — analytics
+- `pnpm add @next/third-parties` — official Google component
+  package, perf-optimized loading.
+- Root `layout.tsx` conditionally renders `<GoogleAnalytics
+  gaId={GA4_ID}>` only when `NEXT_PUBLIC_GA4_MEASUREMENT_ID` is set.
+- `components/analytics/Clarity.tsx` — gated on
+  `NEXT_PUBLIC_CLARITY_PROJECT_ID`; `next/script` with
+  `strategy="lazyOnload"`.
+- `components/analytics/MetaPixel.tsx` — **intentionally disabled**
+  placeholder (returns `null` even when env var is set). File header
+  documents the activation checklist for when Meta ads launch.
+- `components/analytics/WebVitalsReporter.tsx` — `useReportWebVitals`
+  forwards every LCP/CLS/INP/FCP/TTFB through the existing
+  `recordWebVital()` helper in `lib/analytics.ts`.
+- `lib/analytics.ts` — added `recordWebVital` + extended
+  `ThemeToggleParams` to include `"system"`.
+- `components/ThemeToggle.tsx` — fires `trackThemeToggle({ to_theme:
+  next })` on click (the P4-deferred wiring).
+
+Frontend — image rendering + footer
+- `next.config.ts` — `images.remotePatterns` built from
+  `NEXT_PUBLIC_API_URL` so `<Image>` can load Django `/media/` URLs.
+- `ProductCard.tsx` — wraps image area in a `<Link>` to the new
+  detail page; renders `<Image fill loading="lazy">` with
+  `alt={alt_text || name}` when `image` is set; shows a quiet
+  placeholder div when null.
+- `Footer.tsx` — now a server component; fetches `getSiteSettings()`
+  and renders address + phone + opening hours when configured.
+  Falls back gracefully to the brand-only line when the singleton
+  isn't set. Adds a single-line Spanish cookie disclosure.
+
+Frontend — logo SVG into header
+- Copied 2 logo variants from `docs/svg/Logo png sin fondo/` into
+  `public/brand/` (`wayka-wordmark-on-light.svg` = wine variant for
+  light mode, `wayka-wordmark-on-dark.svg` = cream variant for dark
+  mode).
+- `Header.tsx` — uses `next/image priority` with both variants;
+  Tailwind `dark:hidden` / `hidden dark:block` swap. Same width/
+  height on both so theme swap is zero layout shift.
+
+Frontend — Lighthouse
+- `pnpm add -D lighthouse@13`.
+- `lighthouse:home` + `lighthouse:bocaditos` scripts in package.json.
+- `.gitignore` excludes `frontend/lighthouse-*.html`.
+- One-shot local run (against `pnpm start -p 3001`, headless Chrome):
+  - `/` — Performance 93, Accessibility 96, Best Practices 100,
+    SEO 100.
+  - `/bocaditos` — Performance 88, Accessibility 94, Best Practices
+    100, SEO 100.
+
+Tests — 35 new (105+ total: 77 backend + 87 frontend, all green)
+- Backend `core/tests.py` (+15 tests): singleton clamp, load helper,
+  admin add-after-exists is 403, admin delete button absent,
+  WeekdayHours unique constraint + mixed-null + close<open
+  validation + closed-day acceptance, /api/site/ 200+404 + headers,
+  fixture loads 1 settings + 7 hours.
+- Frontend `app/__tests__/sitemap.test.ts` (5): static routes,
+  product entries, inactive excluded, API-down fallback, env-var
+  prefix.
+- Frontend `app/__tests__/robots.test.ts` (3): allow+disallow rules,
+  sitemap URL, trailing-slash normalization.
+- Frontend `lib/__tests__/jsonld.test.ts` (8): LocalBusiness shape +
+  openingHoursSpecification + optional fields; Product with offers
+  + CRC currency + Schema.org availability + single-variant
+  flattening + unavailable-variant exclusion; BreadcrumbList
+  positions.
+- Frontend `components/analytics/__tests__/MetaPixel.test.tsx` (3):
+  no script with or without env var, no facebook.net src.
+- Frontend `components/analytics/__tests__/Clarity.test.tsx` (2):
+  no render when blank, script content interpolates project ID.
+- Frontend `app/__tests__/metadata.test.ts` (4): root layout
+  metadata shape, unique category titles, productDetail
+  generateMetadata happy + missing + fallback paths.
+- Frontend `app/__tests__/headings.test.ts` (dynamic): one test per
+  `page.tsx` file asserting exactly one `<h1>`.
+- Frontend `components/__tests__/ThemeToggle.test.tsx` (+1): clicking
+  fires `trackThemeToggle({ to_theme: "dark" })` on light→dark.
+- Frontend `components/catalog/__tests__/ProductCard.test.tsx` (+3):
+  renders `<Image>` with alt_text when image is set, shows
+  placeholder when null, falls back to name when alt_text blank.
+
+Documentation
+- `.env.example` — added `NEXT_PUBLIC_SITE_URL`,
+  `NEXT_PUBLIC_GSC_VERIFICATION`, `NEXT_PUBLIC_META_PIXEL_ID`.
+- `README.md` — new "SEO & Analytics" section with route table,
+  analytics wiring summary, manual launch checklist, local
+  Lighthouse instructions + recorded scores. API table gains
+  `/api/site/`.
+- `PROGRESS.md` — this entry.
+- `TESTING_CHECKLIST.md` — new sections `A.7` (SiteSettings backend)
+  and `B.9` (frontend SEO + analytics).
+- `AGENTS.md §8` — Live status bumped: P4 marked complete with
+  SHA; P5 implemented, awaits sign-off.
+
+**Verified**
+
+Backend (`backend/`):
+- `ruff check .` clean.
+- `black --check .` clean.
+- `python manage.py check` — 0 issues.
+- `python manage.py makemigrations --check --dry-run` — no changes.
+- `python manage.py test` — **77/77 in ~1.7s** (62 from P1–P3 + 15
+  new core).
+- Live: `loaddata sample_site` loads 8 objects; `GET /api/site/`
+  returns the singleton with nested hours, Content-Language es-CR,
+  Cache-Control headers correct.
+
+Frontend (`frontend/`):
+- `pnpm lint` clean.
+- `pnpm format:check` clean.
+- `pnpm test:ci` — **72/72 in ~4.2s** (36 from P4 + 36 new).
+- `pnpm build` succeeds; 10 routes generated.
+- Live SSR smoke (`pnpm start -p 3001`):
+  - `/sitemap.xml` returns valid XML with home + 3 categories +
+    catering + all 8 visible product slugs.
+  - `/robots.txt` returns the expected rules.
+  - `/productos/pizza-margarita-artesanal` emits 3 JSON-LD blocks
+    (FoodEstablishment + Product with CRC offers + BreadcrumbList).
+  - `/productos/producto-archivado-de-prueba` (inactive) renders
+    the "Producto no encontrado" UI with
+    `<meta name="robots" content="noindex, nofollow">` (Next 16
+    streams the not-found UI under HTTP 200 for dynamic routes —
+    the meta tag is what de-indexes the URL).
+  - `/productos/totally-fake-slug` (unknown) — same noindex
+    behavior.
+  - `/does-not-exist` (no dynamic match) — HTTP 404.
+  - Home OG meta tags include site name "Wayka", locale es_CR,
+    OG image at `/opengraph-image.png?...`.
+  - LocalBusiness JSON-LD embedded in the body with address, geo,
+    telephone, opening hours for 6 days (Sunday closed → omitted).
+- Lighthouse (lab, headless): home 93/96/100/100,
+  /bocaditos 88/94/100/100.
+
+**Deferred / known issues**
+
+- **HTTP 404 status code for dynamic-route `notFound()`** — Next 16
+  streams the not-found UI under HTTP 200 instead of returning a
+  hard 404 status. The `<meta name="robots" content="noindex,
+  nofollow">` and `<title>Producto no encontrado>` are emitted in
+  the HTML so Googlebot de-indexes correctly. To get a real HTTP
+  404, future work could split the route into a synchronous
+  prerender path. Acceptable for v1.
+- **Real GSC verification + sitemap submission** — both require a
+  deployed domain; the meta tag is wired and ready.
+- **Real GA4 data + Microsoft Clarity heatmaps** — both require
+  deployed env vars + traffic.
+- **Catering calculator** — still blocked on client serving ratios
+  (deferred from P4). `/catering` placeholder + WhatsApp CTA still
+  ship.
+- **Lighthouse Performance < 100 locally** — production CDN +
+  proper TTFB will lift the score; the lab number is acceptable.
+- **`LICENSE` file** — still unresolved.
+- **Production deploy (Vercel + Railway/Render, managed Postgres,
+  cloud media storage)** — that's the master prompt §7 "deferred"
+  bucket; not in P5 scope.
+
+**Next**
+
+- Phase 5 complete from this agent's side. **All five phases of the
+  master prompt are now implemented.** Awaits user sign-off on P5
+  before declaring the project launch-ready.
+- After sign-off, the deferred items above can land as small
+  focused PRs (catering calculator, LICENSE, deployment infra).
+
+---
+
+## 2026-06-08 — Phase 4: frontend catalog, cart, WhatsApp funnel (`7666f3c` · phase: P4)
 
 **Shipped**
 

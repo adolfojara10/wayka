@@ -18,7 +18,7 @@
  * surfaces as the Next.js error boundary.
  */
 
-import type { Product, ProductCategory, Supermarket } from "./api-types";
+import type { Product, ProductCategory, SiteSettings, Supermarket } from "./api-types";
 
 /** Base URL of the Django API, with no trailing slash. */
 function baseUrl(): string {
@@ -83,4 +83,27 @@ export async function getSupermarkets(): Promise<Supermarket[]> {
     throw new Error(`getSupermarkets failed: ${response.status} ${response.statusText}`);
   }
   return (await response.json()) as Supermarket[];
+}
+
+/**
+ * Fetch the site-wide identity singleton (`GET /api/site/`).
+ *
+ * Returns `null` when the singleton has not been created yet (admin
+ * empty) so callers can degrade gracefully — e.g. skip emitting
+ * `LocalBusiness` JSON-LD or showing the address in the footer.
+ * Throws on any other non-2xx response.
+ */
+export async function getSiteSettings(): Promise<SiteSettings | null> {
+  const url = `${baseUrl()}/site/`;
+  // Site settings change rarely; cache for 5 minutes.
+  const response = await fetch(url, {
+    next: { revalidate: 300, tags: ["site"] },
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`getSiteSettings failed: ${response.status} ${response.statusText}`);
+  }
+  return (await response.json()) as SiteSettings;
 }

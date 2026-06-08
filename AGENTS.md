@@ -221,18 +221,24 @@ types: `feat`, `fix`, `chore`, `docs`, `refactor`, `perf`, `test`,
   complete (commit `8d6c366`).
 - ✅ **Phase 3 — REST API & SEO Data Layer** — complete
   (commit `9f331ee`).
-- 🛠️ **Phase 4 — Frontend Experience** — implemented;
-  awaits user sign-off. Server-rendered home + three crawlable
-  category routes (`/bocaditos`, `/sweets`, `/pizzas`) with
-  state-aware product cards, sessionStorage-backed Antojo Cart,
-  framer-motion drawer, spec-aligned WhatsApp message builder,
-  centralized analytics utility, Spanish 404, and `/catering`
-  placeholder. 31 new frontend tests (36 total, all green); `pnpm
-  build` succeeds. **Calculator + ThemeToggle analytics wiring
-  deferred to a follow-up patch (catering ratios blocked on
-  client).** See `PROGRESS.md` for details.
-- ⏭️ **Phase 5 — SEO Hardening, Analytics & Launch Readiness** —
-  not yet started; awaits P4 sign-off.
+- ✅ **Phase 4 — Frontend Experience** — complete
+  (commit `7666f3c`).
+- 🛠️ **Phase 5 — SEO Hardening, Analytics & Launch Readiness** —
+  implemented; awaits user sign-off. Backend `SiteSettings`
+  singleton + `WeekdayHours` related model + `/api/site/`; runtime
+  `sitemap.ts` + `robots.ts`; default `opengraph-image.png`;
+  `/productos/<slug>` detail route with per-product metadata + 3
+  JSON-LD blocks (FoodEstablishment + Product + BreadcrumbList);
+  `@next/third-parties` GA4 wiring; Clarity loader + Meta Pixel
+  disabled placeholder + Web Vitals reporter + `trackThemeToggle`
+  wired; `next/image` in ProductCard + theme-aware logo SVG in
+  Header; server-rendered Footer with live SiteSettings; Lighthouse
+  scored 93/96/100/100 (home) and 88/94/100/100 (bocaditos) lab.
+  35 new tests (~149 total). See `PROGRESS.md` for details.
+- 🎯 **All five master-prompt phases are now implemented.**
+  Remaining work lives in master-prompt §7 "Deferred" bucket
+  (deployment infra, catering calculator, Meta Pixel activation,
+  LICENSE).
 
 ---
 

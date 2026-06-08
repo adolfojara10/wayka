@@ -254,6 +254,98 @@ Manual (your review checklist — requires both servers running):
   cycle); no FOUC; no layout shift.
 - [ ] All Spanish copy reads naturally for a Costa Rica audience.
 
+### A.7 SiteSettings + WeekdayHours backend (Phase 5)
+
+Auto (CI) — covered by `python manage.py test`:
+- [x] `core.tests.SiteSettingsModelTests` — `save()` clamps pk to 1,
+  second `create()` rewrites/overwrites; `load()` returns None when
+  absent and the singleton when present.
+- [x] `core.tests.SiteSettingsAdminTests` — admin add view is 200
+  when no row exists, 403 once singleton exists; change view does
+  not render the `deletelink` button.
+- [x] `core.tests.WeekdayHoursTests` — unique constraint per
+  `(settings, day)`; `full_clean()` rejects mixed-null (one time
+  set, the other not) and `close <= open`; accepts both-null as
+  "closed".
+- [x] `core.tests.SiteSettingsEndpointTests` — `GET /api/site/`
+  returns 404 when singleton absent; 200 with nested hours when
+  present; 2xx carries `Content-Language: es-CR` and
+  `Cache-Control: public...`; 404 does not carry the public cache
+  header.
+- [x] `core.tests.SampleSiteFixtureTests` — `loaddata sample_site`
+  installs 1 settings row + 7 weekday rows; Sunday is closed.
+
+Manual (your review checklist):
+- [ ] In Django admin, after `loaddata sample_site`, the
+  `Ajustes del sitio` change list shows exactly one row.
+- [ ] Trying to add a second row from the admin returns 403.
+- [ ] The `Delete` button is absent on the change form.
+- [ ] Editing a weekday's open/close times inline persists.
+- [ ] Trying to save close time earlier than open time shows the
+  Spanish error from the model `clean()`.
+
+### B.9 Frontend SEO + analytics (Phase 5)
+
+Auto (CI) — covered by `pnpm test:ci`:
+- [x] `app/__tests__/sitemap.test.ts` — home + 3 categories +
+  catering always present; product entries derived from
+  `getProducts()` (which already excludes inactive); static-only
+  fallback when API throws; URL prefix uses `NEXT_PUBLIC_SITE_URL`.
+- [x] `app/__tests__/robots.test.ts` — allow `/`, disallow `/api/`;
+  sitemap URL uses `NEXT_PUBLIC_SITE_URL`; trailing slashes
+  normalized.
+- [x] `lib/__tests__/jsonld.test.ts` — `buildLocalBusinessLd`
+  shape (FoodEstablishment + PostalAddress + GeoCoordinates +
+  openingHoursSpecification only for non-closed days + optional
+  fields elided when blank); `buildProductLd` shape (CRC currency,
+  Schema.org `https://schema.org/<Availability>` URLs, single-offer
+  flattening, unavailable variants excluded, PreOrder / OutOfStock
+  mapping); `buildBreadcrumbLd` 1-indexed positions.
+- [x] `components/analytics/__tests__/MetaPixel.test.tsx` — no
+  `<script>` emitted regardless of env var; no `facebook.net` /
+  `fbevents.js` in markup.
+- [x] `components/analytics/__tests__/Clarity.test.tsx` — no script
+  when env var blank; script with interpolated project ID when set.
+- [x] `app/__tests__/metadata.test.ts` — root layout exports
+  `metadataBase`, `openGraph.siteName=Wayka`, `locale=es_CR`,
+  `twitter.card=summary_large_image`, `robots: {index:true,
+  follow:true}`, canonical `/`; category pages have unique titles
+  with their Spanish labels; product detail `generateMetadata`
+  uses product name + `meta_description` (with fallback to
+  description) and returns noindex when product missing.
+- [x] `app/__tests__/headings.test.ts` — every `page.tsx` contains
+  exactly one `<h1>`.
+- [x] `components/__tests__/ThemeToggle.test.tsx` — clicking fires
+  `trackThemeToggle({ to_theme: <next> })`.
+- [x] `components/catalog/__tests__/ProductCard.test.tsx` (added) —
+  renders `next/image` with `alt_text` when `image` is set; shows
+  placeholder when `image` is null; falls back to `name` when
+  `alt_text` blank.
+
+Manual (your review checklist — requires both servers running):
+- [ ] `curl http://localhost:3001/sitemap.xml` returns XML with home
+  + categories + catering + every visible product slug.
+- [ ] `curl http://localhost:3001/robots.txt` returns the right
+  rules and sitemap URL.
+- [ ] `view-source:http://localhost:3001/productos/<slug>` shows 3
+  `<script type="application/ld+json">` blocks: FoodEstablishment,
+  Product, BreadcrumbList.
+- [ ] `https://search.google.com/test/rich-results` accepts the
+  Product JSON-LD (run against a deployed URL).
+- [ ] OG card preview: paste a deployed product URL into the
+  Facebook Sharing Debugger
+  (https://developers.facebook.com/tools/debug/) — preview shows
+  the wordmark on cream + correct title + description.
+- [ ] WhatsApp preview: share a deployed product URL in a WhatsApp
+  chat — same preview appears.
+- [ ] `<meta name="google-site-verification">` appears in the HTML
+  when `NEXT_PUBLIC_GSC_VERIFICATION` is set; does not appear when
+  blank.
+- [ ] `pnpm lighthouse:home` after deploy: Performance ≥ 90, SEO =
+  100, Best Practices = 100, Accessibility ≥ 95.
+- [ ] Manual GA4 DebugView shows `whatsapp_order_click` events
+  firing on real WhatsApp CTA clicks after deploy.
+
 ---
 
 ## B. Frontend — Next.js + Tailwind + Framer Motion

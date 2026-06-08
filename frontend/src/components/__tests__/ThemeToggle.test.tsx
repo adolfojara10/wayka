@@ -2,6 +2,15 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/analytics", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/analytics")>("@/lib/analytics");
+  return {
+    ...actual,
+    trackThemeToggle: vi.fn(),
+  };
+});
+
+import { trackThemeToggle } from "@/lib/analytics";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
@@ -138,5 +147,15 @@ describe("<ThemeToggle />", () => {
     renderToggle();
 
     expect(screen.getByRole("button")).toHaveAccessibleName(/tema claro/i);
+  });
+
+  it("fires trackThemeToggle with the next theme on click", async () => {
+    mockMatchMedia(false);
+    window.localStorage.setItem(THEME_STORAGE_KEY, "light");
+    renderToggle();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button"));
+    // light → dark
+    expect(trackThemeToggle).toHaveBeenCalledWith({ to_theme: "dark" });
   });
 });

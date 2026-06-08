@@ -55,6 +55,9 @@ dist/
 # Test coverage (frontend)
 coverage/
 
+# Lighthouse HTML reports (frontend) — run locally, never committed.
+frontend/lighthouse-*.html
+
 # --- macOS / editors / misc ---
 .DS_Store
 .AppleDouble

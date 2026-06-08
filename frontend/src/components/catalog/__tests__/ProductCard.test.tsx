@@ -198,3 +198,40 @@ describe("ProductCard — Pedir Ya CTA", () => {
     });
   });
 });
+
+describe("ProductCard — image rendering", () => {
+  it("renders a next/image with alt_text when product.image is set", () => {
+    renderCard(
+      makeProduct({
+        image: "http://localhost:8000/media/products/p.jpg",
+        alt_text: "Pizza margarita con albahaca",
+      }),
+    );
+    const img = screen.getByAltText("Pizza margarita con albahaca");
+    // next/image renders an <img> tag in jsdom; the URL is transformed
+    // through /_next/image but src will at minimum contain the original
+    // filename or its encoded form.
+    expect(img.tagName.toLowerCase()).toBe("img");
+    expect(screen.queryByTestId("product-card-image-placeholder")).toBeNull();
+  });
+
+  it("renders the placeholder div (no <img>) when product.image is null", () => {
+    renderCard(makeProduct({ image: null }));
+    expect(screen.getByTestId("product-card-image-placeholder")).toBeInTheDocument();
+    // No product photo means no decorative <img> is in the card.
+    // The page itself may have other images (e.g. logo) but the card
+    // body shouldn't render one.
+    const imgs = screen.queryAllByRole("img");
+    expect(imgs).toHaveLength(0);
+  });
+
+  it("falls back to product.name as alt when alt_text is blank", () => {
+    renderCard(
+      makeProduct({
+        image: "http://localhost:8000/media/p.jpg",
+        alt_text: "",
+      }),
+    );
+    expect(screen.getByAltText("Pizza Margarita")).toBeInTheDocument();
+  });
+});
