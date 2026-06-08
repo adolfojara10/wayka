@@ -108,6 +108,89 @@ Manual (your review checklist):
 - [ ] A variant marked `is_available=False` still shows up in the
   admin inline (the gating is presentation-only — no row is hidden).
 
+### A.6 Catalog REST API — public read-only contract (Phase 3)
+
+Auto (CI) — covered by `python manage.py test`:
+- [x] `test_api.py` — `GET /api/products/` returns 200 with
+  `Content-Type: application/json`.
+- [x] `test_api.py` — `inactive` products never appear in the list.
+- [x] `test_api.py` — `?category=pizzas` returns only pizzas.
+- [x] `test_api.py` — invalid `?category=` returns 400 with a
+  structured DRF error body (no silent empty list).
+- [x] `test_api.py` — ordering matches the P2 rule end-to-end:
+  featured-active → non-featured-active → unavailable, ties by
+  `display_order`, inactive excluded.
+- [x] `test_api.py` — every 2xx response carries
+  `Content-Language: es-CR` and
+  `Cache-Control: public, max-age=60, s-maxage=300` and
+  `Vary: Accept-Language`.
+- [x] `test_api.py` — each list item includes every required SEO
+  field (`slug`, `name`, `description`, `category`, `status`,
+  `is_featured`, `is_orderable`, `has_multiple_variants`,
+  `availability`, `image`, `meta_description`, `alt_text`,
+  `variants`, `default_variant_id`, `updated_at`).
+- [x] `test_api.py` — `variants` nest correctly inside each product
+  and are returned in `display_order`.
+- [x] `test_api.py` — each variant has both numeric `price` (e.g.
+  `7500.0`) and pre-formatted `price_crc` (`"₡ 7 500"`, NBSP
+  separator).
+- [x] `test_api.py` — `is_orderable` is `true` only for
+  `Status.ACTIVE` products.
+- [x] `test_api.py` — `availability` maps `Status` to Schema.org
+  `ItemAvailability` strings (`InStock` / `PreOrder` / `OutOfStock`).
+- [x] `test_api.py` — `image` is `null` when no upload is present.
+- [x] `test_api.py` — `has_multiple_variants` flag is correct
+  (False for 1 variant, True for 2+).
+- [x] `test_api.py` — N+1 guard: the list view executes ≤5 SQL
+  queries regardless of catalog size.
+- [x] `test_api.py` — `GET /api/products/<slug>/` returns 200 for an
+  active product.
+- [x] `test_api.py` — `coming_soon` and `sold_out` products are
+  reachable via detail (frontend renders the badge).
+- [x] `test_api.py` — **`inactive` product detail returns 404**
+  (SEO-critical: lets Next.js emit a real 404 to Googlebot).
+- [x] `test_api.py` — unknown slug detail returns 404.
+- [x] `test_api.py` — 404 responses do NOT carry
+  `Cache-Control: public, s-maxage=300` (CDNs must not cache them).
+- [x] `test_api.py` — `GET /api/supermarkets/` returns only
+  `is_active=True` rows, ordered by `display_order` then `name`.
+- [x] `test_api.py` — `GET /api/schema/` returns OpenAPI YAML that
+  mentions all 3 catalog endpoints.
+- [x] `test_serializers.py` — `format_crc` uses ROUND_HALF_UP
+  rounding, NBSP separators, handles zero correctly.
+- [x] `test_serializers.py` — `ProductVariantSerializer` returns
+  both numeric and formatted prices.
+- [x] `test_serializers.py` — all required SEO fields present in
+  product payload; `meta_description` / `alt_text` pass through
+  unmodified.
+- [x] `test_serializers.py` — `default_variant_id` points to the
+  marked-default variant.
+- [x] `test_serializers.py` — `is_orderable` truth table holds at
+  the serializer layer.
+- [x] `test_serializers.py` — `AVAILABILITY_BY_STATUS` mapping
+  exhaustively covers every `Status` value (no orphans on future
+  enum additions).
+- [x] `test_serializers.py` — `ProductDetailSerializer` field set
+  is identical to `ProductListSerializer` today (pinned for safety
+  while we hold detail-only fields for P4/P5).
+
+Manual (your review checklist):
+- [ ] `curl -i http://localhost:8000/api/products/` — visually
+  confirm `Content-Language`, `Cache-Control`, `Vary`,
+  `Content-Type` headers + Spanish product names.
+- [ ] `curl -i http://localhost:8000/api/products/<inactive-slug>/`
+  — confirm 404.
+- [ ] `curl -i http://localhost:8000/api/products/?category=pizzas`
+  — confirm only pizzas, in expected order.
+- [ ] Open `http://localhost:8000/api/docs/` — Swagger UI renders;
+  every endpoint has Spanish summary + description.
+- [ ] Open `http://localhost:8000/api/redoc/` — Redoc renders.
+- [ ] After uploading an image in admin, the product's `image`
+  field in `/api/products/` returns an **absolute** URL (starts
+  with `http://`).
+- [ ] `Vary: Accept-Language` is present (defensive even though the
+  site is Spanish-only; will matter once a CDN is in front).
+
 ---
 
 ## B. Frontend — Next.js + Tailwind + Framer Motion

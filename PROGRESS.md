@@ -24,7 +24,160 @@ Entry template:
 
 ---
 
-## 2026-06-08 — Phase 2: catalog models, admin, fixtures, tests (uncommitted · phase: P2)
+## 2026-06-08 — Phase 3: public catalog API + OpenAPI docs (uncommitted · phase: P3)
+
+**Shipped**
+
+API endpoints (`backend/catalog/urls.py`, mounted under `/api/`):
+- `GET /api/products/` — list of visible products (excludes
+  `inactive`). `?category=` filter validated against the
+  `Category` enum. Sort order driven by P2's
+  `Product.objects.visible().ordered_for_display()` plus
+  `prefetch_related("variants")` (N+1 guard test enforces ≤5
+  queries). No pagination.
+- `GET /api/products/<slug>/` — single product. **Inactive products
+  and unknown slugs return 404** so the Next.js `notFound()` handler
+  can emit a hard 404 to Googlebot (the SEO-critical contract for
+  removed products).
+- `GET /api/supermarkets/` — `is_active=True` only, ordered by
+  `display_order, name`.
+- `GET /api/schema/` — auto-generated OpenAPI 3 (YAML).
+- `GET /api/docs/` (Swagger UI), `GET /api/redoc/` — interactive
+  docs. Both wired via drf-spectacular.
+
+Serializers (`backend/catalog/serializers.py`):
+- `ProductListSerializer` exposes everything a downstream JSON-LD /
+  OpenGraph emitter could need: `slug`, `name`, `description`,
+  `category`, `status`, `is_featured`, **`is_orderable`** (computed),
+  **`has_multiple_variants`**, **`availability`** (Schema.org enum
+  derived from `status`: ACTIVE→`InStock`, COMING_SOON→`PreOrder`,
+  SOLD_OUT→`OutOfStock`, INACTIVE→`Discontinued`), absolute `image`
+  URL or `null`, `meta_description`, `alt_text`, nested
+  `variants`, `default_variant_id`, `updated_at`.
+- `ProductVariantSerializer` returns prices in **two shapes**:
+  numeric `price` (for cart math + JSON-LD `offers.price`) and
+  formatted `price_crc` (for direct rendering, e.g. `"₡ 7 500"`
+  with non-breaking spaces, ROUND_HALF_UP).
+- `ProductDetailSerializer` subclasses list today; held as a
+  separate class so P4/P5 can add detail-only fields without
+  breaking the list contract.
+- `SupermarketSerializer` — id, name, address, province, canton,
+  optional lat/long. `is_active` filtered at view layer, never
+  exposed.
+
+SEO-friendly response shaping (`backend/catalog/views.py`):
+- `PublicReadOnlyMixin` stamps every 2xx with
+  `Cache-Control: public, max-age=60, s-maxage=300` and
+  `Vary: Accept-Language`. **Does NOT stamp** these headers on 4xx
+  so CDNs can't cache a missing-resource response and serve it to
+  other visitors (regression-tested).
+- `core/middleware.py::ContentLanguageMiddleware` stamps every
+  response (admin, API, docs) with `Content-Language: es-CR`.
+
+Configuration:
+- Added `django-filter~=24.3` and `drf-spectacular~=0.27` to
+  `requirements.txt`. Both registered in `INSTALLED_APPS`.
+- `REST_FRAMEWORK` extended with `DEFAULT_FILTER_BACKENDS`,
+  `DEFAULT_PERMISSION_CLASSES = [AllowAny]` (read-only public API),
+  and `DEFAULT_SCHEMA_CLASS = drf_spectacular.openapi.AutoSchema`.
+- New `SPECTACULAR_SETTINGS` block with Spanish title /
+  description, version `1.0.0`.
+- `core/views.py::HealthCheckView` got an `@extend_schema`
+  decorator so the OpenAPI schema documents it too.
+
+Tests — 36 new (62 total backend tests, 0.92s)
+- `tests/test_api.py` (24): list returns 200 + JSON; inactive
+  excluded from list; `?category=pizzas` filter; bad category → 400
+  with structured DRF error; ordering matches the P2 rule;
+  `Content-Language` + `Cache-Control` + `Vary` headers correct;
+  payload includes every required SEO field; variants nested in
+  display_order; numeric+formatted price; `is_orderable` truth
+  table; `availability` Schema.org mapping; `image=null` when no
+  upload; `has_multiple_variants` flag; N+1 guard (≤5 queries even
+  after adding 5 more products); detail returns active product;
+  `coming_soon` + `sold_out` still reachable; **inactive → 404**;
+  unknown slug → 404; 404 does NOT leak `s-maxage=300` cache header;
+  supermarkets ordered + filtered by `is_active`; schema endpoint
+  returns OpenAPI YAML mentioning all 3 routes.
+- `tests/test_serializers.py` (12): `format_crc` NBSP separator,
+  ROUND_HALF_UP rounding, zero handling; variant shape; numeric +
+  string price versions; product SEO fields all present;
+  meta_description / alt_text pass-through; variants in
+  display_order; `default_variant_id` points to marked default;
+  image null when absent; `is_orderable` per-status truth table;
+  `availability` mapping exhaustive across all 4 statuses; detail
+  subclasses list with identical field set.
+
+Documentation:
+- `README.md` — new "API" section listing every endpoint, response
+  conventions (Content-Language, prices, availability,
+  is_orderable, Cache-Control, 404 contract), and curl examples.
+- `PROGRESS.md` — this entry.
+- `TESTING_CHECKLIST.md` — new section A.6 with auto-ticked items
+  plus a manual SEO/curl checklist.
+- `AGENTS.md` §8 — Live status bumped to "P3 implemented, awaits
+  sign-off; P4 next".
+
+**Verified**
+
+Backend (run from `backend/`):
+- `ruff check .` clean (1 auto-fix applied to test import order).
+- `black --check .` clean (3 files reformatted after edits).
+- `python manage.py check` — 0 issues.
+- `python manage.py makemigrations --check --dry-run` — no model
+  changes; no new migrations.
+- `python manage.py test` — **62/62 pass** in 0.92s.
+
+Live (`runserver 8765`):
+- `GET /api/health/` → 200 with `Content-Language: es-CR`. (P1
+  contract preserved.)
+- `GET /api/products/` → 200, `Cache-Control: public, max-age=60,
+  s-maxage=300`, `Vary: Accept-Language`, ordering matches the
+  expected sequence (featured-active 1-3, non-featured-active 4-6,
+  `coming_soon` 7, `sold_out` 8). Inactive product never appears.
+- `GET /api/products/?category=pizzas` → 2 pizzas, full variants
+  serialized with `price_crc` formatted as `₡ 7 500`.
+- `GET /api/products/pie-de-limon/` → 200.
+- `GET /api/products/producto-archivado-de-prueba/` → **404** (the
+  SEO-critical case).
+- `GET /api/products/nope-no-existe/` → 404.
+- `GET /api/supermarkets/` → only the 2 active rows (inactive
+  filtered).
+- `GET /api/schema/` → OpenAPI YAML with all 3 catalog endpoints.
+- `GET /api/docs/` → Swagger UI HTML (200).
+
+**Deferred / known issues**
+
+- **All Next.js / HTML-side SEO** stays in Phase 5: `sitemap.ts`,
+  `robots.ts`, JSON-LD emission, OpenGraph / Twitter cards, GA4,
+  Microsoft Clarity, Meta Pixel placeholder, Google Search Console
+  verification, Lighthouse / Core Web Vitals tuning. P3 only sets up
+  the data shape these consumers will need.
+- No write/auth endpoints (out of P3 scope; admin still owns
+  writes).
+- No throttling, search, or pagination (catalog is small; revisit if
+  it ever exceeds ~50 items).
+- DRF emits `Vary: Accept-Language, origin` (note lowercase
+  "origin" courtesy of `django-cors-headers`); this is correct but
+  worth flagging when we move to a CDN.
+- `LICENSE` file still unresolved.
+
+**Next**
+
+- Phase 3 complete from this agent's side. Awaits user sign-off
+  before P4 (Next.js frontend — catalog tabs, product cards,
+  Antojo Cart, WhatsApp redirect, B2B calculator).
+- P4 will consume `/api/products/`, `/api/products/<slug>/`, and
+  `/api/supermarkets/` from server components, using the
+  `availability` and `is_orderable` flags exactly as serialized
+  (no re-derivation on the frontend).
+- P5 will consume the same payloads for `sitemap.ts` (visible
+  slugs + `updated_at`) and JSON-LD (`name`, `description`,
+  numeric `price`, `availability`, absolute `image`).
+
+---
+
+## 2026-06-08 — Phase 2: catalog models, admin, fixtures, tests (`8d6c366` · phase: P2)
 
 **Shipped**
 

@@ -4,3 +4,5 @@ django-cors-headers~=4.4
 python-dotenv~=1.0
 Pillow~=11.0
 django-admin-sortable2~=2.2
+django-filter~=24.3
+drf-spectacular~=0.27

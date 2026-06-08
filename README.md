@@ -112,6 +112,48 @@ pnpm format       # prettier write
 
 ---
 
+## API
+
+The backend ships a public, read-only JSON API consumed by the Next.js
+SSR layer. Inactive products are not reachable; their slugs return
+404 so Google sees a hard not-found and de-indexes the URL.
+
+| Method | URL                              | Purpose                                      |
+| ------ | -------------------------------- | -------------------------------------------- |
+| `GET`  | `/api/health/`                   | Liveness probe.                              |
+| `GET`  | `/api/products/`                 | Catalog list. Filter by `?category=`.        |
+| `GET`  | `/api/products/<slug>/`          | Single product detail (by slug, SEO-safe).   |
+| `GET`  | `/api/supermarkets/`             | Active supermarket pickup locations.         |
+| `GET`  | `/api/schema/`                   | OpenAPI 3 schema (YAML).                     |
+| `GET`  | `/api/docs/`                     | Swagger UI.                                  |
+| `GET`  | `/api/redoc/`                    | Redoc UI.                                    |
+
+Response conventions:
+
+- Spanish content; `Content-Language: es-CR` on every response.
+- Prices in CRC ₡: each variant exposes both `price` (numeric, e.g.
+  `7500.0`) and `price_crc` (pre-formatted string, e.g. `"₡ 7 500"`).
+- `availability` on each product is a Schema.org `ItemAvailability`
+  string (`"InStock"`, `"PreOrder"`, `"OutOfStock"`), ready to drop
+  into JSON-LD on the frontend.
+- `is_orderable` is `true` only when `status == "active"`.
+- 2xx product / supermarket reads carry
+  `Cache-Control: public, max-age=60, s-maxage=300` so SSR / CDN
+  tiers can serve from edge.
+- Inactive or unknown slugs on `/api/products/<slug>/` return `404`.
+
+Quick smoke:
+
+```bash
+curl http://localhost:8000/api/health/
+curl 'http://localhost:8000/api/products/?category=pizzas'
+curl http://localhost:8000/api/products/pie-de-limon/
+curl http://localhost:8000/api/supermarkets/
+open http://localhost:8000/api/docs/      # Swagger UI
+```
+
+---
+
 ## CI
 
 GitHub Actions runs path-filtered jobs on push and pull request:

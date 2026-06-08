@@ -217,13 +217,20 @@ types: `feat`, `fix`, `chore`, `docs`, `refactor`, `perf`, `test`,
 - ✅ **Phase 1 — Foundation & Repository Scaffolding** — complete
   (commit `70e7d05`; brand assets + SVG twins added in `477fd7b` /
   `107d936`).
-- 🛠️ **Phase 2 — Data Models, States & Admin (Backend Core)** —
-  implemented; awaits user sign-off. `catalog` app shipped with
-  `Product`/`ProductVariant`/`Supermarket`, drag-and-drop admin,
-  sample fixture, and 24 catalog tests (26 total backend tests,
-  all green). See `PROGRESS.md` for details.
-- ⏭️ **Phase 3 — REST API & SEO Data Layer** — not yet started;
-  awaits P2 sign-off.
+- ✅ **Phase 2 — Data Models, States & Admin (Backend Core)** —
+  complete (commit `8d6c366`).
+- 🛠️ **Phase 3 — REST API & SEO Data Layer** — implemented;
+  awaits user sign-off. Public read-only API shipped at
+  `/api/products/`, `/api/products/<slug>/`, `/api/supermarkets/`
+  with Schema.org-aligned `availability` enum, dual-shape prices
+  (numeric + formatted CRC), `Content-Language: es-CR`,
+  `Cache-Control: public, max-age=60, s-maxage=300`, and **404 on
+  inactive/unknown slugs** (the SEO-critical contract). OpenAPI
+  schema + Swagger UI + Redoc auto-generated via drf-spectacular
+  (`/api/schema/`, `/api/docs/`, `/api/redoc/`). 36 new tests,
+  62 total backend tests green. See `PROGRESS.md` for details.
+- ⏭️ **Phase 4 — Frontend Experience** — not yet started;
+  awaits P3 sign-off.
 
 ---
 

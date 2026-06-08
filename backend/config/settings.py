@@ -71,6 +71,8 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "corsheaders",
+    "django_filters",
+    "drf_spectacular",
     # Local apps
     "core",
     "catalog",
@@ -86,6 +88,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Wayka-specific: stamps every response with Content-Language: es-CR.
+    # Tiny but real SEO signal that the site is Spanish (Costa Rica).
+    "core.middleware.ContentLanguageMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -168,6 +173,37 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # Disable DRF's browsable HTML UI in production-like environments;
+    # JSON is the only contract. (drf-spectacular provides the docs UI.)
+    "UNAUTHENTICATED_USER": None,
+}
+
+# ---------------------------------------------------------------------------
+# drf-spectacular — OpenAPI 3 schema + Swagger/Redoc UI
+# ---------------------------------------------------------------------------
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Wayka API",
+    "DESCRIPTION": (
+        "API pública del catálogo de Wayka — repostería, catering y "
+        "productos congelados artesanales (Costa Rica). Todos los "
+        "endpoints son de solo lectura y públicos. Las respuestas "
+        "están en español; los precios en colones costarricenses (CRC ₡)."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,  # the schema view itself is excluded from the schema
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api",
+    "CONTACT": {"name": "Wayka"},
+    "LICENSE": {"name": "All rights reserved"},
 }
 
 
