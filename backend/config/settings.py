@@ -58,6 +58,10 @@ ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1")
 # ---------------------------------------------------------------------------
 
 INSTALLED_APPS = [
+    # adminsortable2 must come *before* django.contrib.admin so its templates
+    # override the stock admin change-list and inline templates. See:
+    # https://django-admin-sortable2.readthedocs.io/en/latest/usage.html
+    "adminsortable2",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -69,6 +73,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Local apps
     "core",
+    "catalog",
 ]
 
 MIDDLEWARE = [

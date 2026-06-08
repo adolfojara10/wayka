@@ -24,7 +24,134 @@ Entry template:
 
 ---
 
-## 2026-06-08 — SVG twins for every brand asset (uncommitted · phase: P1)
+## 2026-06-08 — Phase 2: catalog models, admin, fixtures, tests (uncommitted · phase: P2)
+
+**Shipped**
+
+New Django app: `catalog/`.
+
+Models (`catalog/models.py`)
+- `Product` — name, slug (auto-generated + collision-resolved),
+  description, `Category` choices (`bocaditos` / `sweets` /
+  `pizzas`), `Status` choices (`active` / `coming_soon` / `sold_out`
+  / `inactive`) with Spanish display labels, `display_order`,
+  `is_featured`, `image` (`ImageField`, requires Pillow),
+  `meta_description`, `alt_text`, audit timestamps. Derived
+  properties: `is_orderable`, `has_multiple_variants`,
+  `default_variant` (resilient — falls back to first-by-order when
+  zero or many `is_default` rows exist).
+- `ProductVariant` — FK to Product (`related_name="variants"`),
+  `name`, `price` (Decimal in CRC ₡), `is_default`, `is_available`
+  (per-variant availability), `display_order`. DB-level
+  `UniqueConstraint("product", "name")` so the same variant name
+  cannot exist twice under one product.
+- `Supermarket` — name, address, province, canton, optional
+  lat/long, `display_order`, `is_active`, audit timestamps.
+
+Manager / queryset (`catalog/managers.py`)
+- `Product.objects.visible()` excludes `INACTIVE`.
+- `.for_category(<slug>)` filters by category.
+- `.ordered_for_display()` encodes the canonical P2 sort rule
+  (featured active → non-featured active → unavailable bucket → ties
+  broken by `display_order`, then `name`). One SQL query via
+  `Case`/`When` annotations.
+
+Admin (`catalog/admin.py`)
+- `ProductAdmin` (SortableAdminMixin) — Spanish fieldsets, colored
+  status badges, `list_editable` for `is_featured`,
+  `prepopulated_fields={"slug": ("name",)}`, drag-and-drop
+  reordering via `django-admin-sortable2`. Inline editing of
+  `ProductVariant` rows. Site-wide Spanish admin branding (`site_header`,
+  `site_title`, `index_title`).
+- `ProductVariantInlineFormSet` — custom formset that rejects
+  saving a product with more than one variant marked
+  `is_default=True` (per the "form-level only" decision from the
+  plan).
+- `SupermarketAdmin` (SortableAdminMixin) — analogous.
+
+Fixtures (`catalog/fixtures/sample_catalog.json`)
+- 9 products spanning every category and every status (including
+  one `inactive` to prove the visible() filter works).
+- 15 variants: products with 1, 2, and 3 variants; one variant
+  flagged `is_available=False` to demonstrate per-variant gating.
+- 2 supermarkets (San José + Heredia).
+
+Dependencies
+- Added `Pillow~=11.0` (required by `ImageField`).
+- Added `django-admin-sortable2~=2.2` (resolved to 2.3.1).
+- Registered `"adminsortable2"` before `django.contrib.admin` in
+  `INSTALLED_APPS`; registered `"catalog"`.
+
+Migration
+- `catalog/migrations/0001_initial.py` (3 models, 1 composite index
+  on `(category, status)`, 1 index on `province`, 1
+  `UniqueConstraint` on `(product, name)`).
+
+Tests — `catalog/tests/`
+- `test_models.py` (13 tests): slug auto-gen + collision-resolution
+  + preservation + Spanish-char normalization; `Status` & `Category`
+  enum values match spec; `is_orderable` truth table; variant
+  `__str__`; unique-name-per-product constraint; same-name OK across
+  products; `default_variant` returns marked default; falls back to
+  first-by-order when none flagged; returns `None` for variant-less
+  product; `Supermarket` accepts optional coordinates blank.
+- `test_business_rules.py` (5 tests): `visible()` excludes
+  `INACTIVE` only; ordering rule — unavailable items sink even when
+  featured; featured-within-active ordering; name tiebreaker after
+  `display_order`; `for_category` composes correctly with ordering;
+  `has_multiple_variants` boundary conditions (0 / 1 / 2 / back to 1).
+- `test_admin.py` (4 tests): anonymous → redirect to login; staff
+  can list products (Spanish "Activo" label renders); save product
+  with 2 inline variants → 302 + DB state correct; submitting two
+  default variants → 200 + Spanish error message + nothing
+  persisted.
+
+**Verified**
+
+Backend (run from `backend/`)
+- `ruff check .` clean.
+- `black --check .` clean.
+- `python manage.py check` — 0 issues.
+- `python manage.py makemigrations --check --dry-run` — no changes.
+- `python manage.py test` — **26/26 tests pass** (24 new catalog +
+  2 existing core), 0.80s.
+- `python manage.py loaddata sample_catalog` — installed 26
+  objects.
+- Live: `runserver` → `GET /api/health/` still returns 200 with the
+  P1 payload. `/admin/` and `/admin/catalog/product/` 302 to
+  `/admin/login/` as expected.
+- Live: queryset spot-check — `Product.objects.visible().for_category("pizzas").ordered_for_display()`
+  returns the featured pizza first; the `inactive` fixture product
+  never appears.
+
+**Deferred / known issues**
+
+- DRF serializers + endpoints (`GET /api/products/`,
+  `GET /api/products/<slug>/`, `GET /api/supermarkets/`) — that's the
+  explicit Phase 3 deliverable per the master prompt.
+- Frontend rendering of any of this — Phase 4.
+- No `LICENSE` file yet — unchanged.
+- Admin drag-and-drop reordering renders the order column as a
+  hidden input; the inline still exposes `display_order` as an
+  editable integer fallback. Manual verification of the JS
+  drag-and-drop behavior is on the new
+  `TESTING_CHECKLIST.md` §A.5 list.
+- Test discovery only finds the suite when CWD is `backend/`
+  (existing P1 quirk — CI's `working-directory: backend` already
+  handles this).
+
+**Next**
+
+- Phase 2 complete from this agent's side. Awaits user sign-off
+  before P3 (DRF serializers + public endpoints).
+- After sign-off, P3 will compose the new
+  `Product.objects.visible().for_category(...).ordered_for_display()`
+  helpers into the serializer layer rather than re-deriving the
+  rule in views.
+
+---
+
+## 2026-06-08 — SVG twins for every brand asset (`107d936` · phase: P1)
 
 **Shipped**
 

@@ -108,7 +108,13 @@ wayka/
 │   ├── requirements-dev.txt
 │   ├── pyproject.toml       ← ruff + black + pytest-django config
 │   ├── config/              ← Django project package
-│   └── core/                ← cross-cutting app (health endpoint, etc.)
+│   ├── core/                ← cross-cutting app (health endpoint, etc.)
+│   └── catalog/             ← Product / ProductVariant / Supermarket (P2)
+│       ├── models.py
+│       ├── managers.py      ← visible() / for_category() / ordered_for_display()
+│       ├── admin.py         ← drag-and-drop sortable, inline variants, Spanish UI
+│       ├── fixtures/sample_catalog.json
+│       └── tests/           ← 24 catalog tests (models / business rules / admin)
 └── frontend/                ← Next.js 16
     ├── package.json
     ├── tsconfig.json
@@ -209,8 +215,15 @@ types: `feat`, `fix`, `chore`, `docs`, `refactor`, `perf`, `test`,
 ## 8. Live status (always current)
 
 - ✅ **Phase 1 — Foundation & Repository Scaffolding** — complete
-  (commit `70e7d05`). See `PROGRESS.md` for details.
-- ⏭️ **Phase 2** — not yet started; awaits user sign-off on P1.
+  (commit `70e7d05`; brand assets + SVG twins added in `477fd7b` /
+  `107d936`).
+- 🛠️ **Phase 2 — Data Models, States & Admin (Backend Core)** —
+  implemented; awaits user sign-off. `catalog` app shipped with
+  `Product`/`ProductVariant`/`Supermarket`, drag-and-drop admin,
+  sample fixture, and 24 catalog tests (26 total backend tests,
+  all green). See `PROGRESS.md` for details.
+- ⏭️ **Phase 3 — REST API & SEO Data Layer** — not yet started;
+  awaits P2 sign-off.
 
 ---
 

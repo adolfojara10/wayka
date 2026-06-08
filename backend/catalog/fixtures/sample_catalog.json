@@ -1,0 +1,378 @@
+[
+  {
+    "model": "catalog.product",
+    "pk": 1,
+    "fields": {
+      "name": "Empanadas Artesanales",
+      "slug": "empanadas-artesanales",
+      "description": "Empanadas horneadas con masa hecha en casa, rellenas con recetas tradicionales costarricenses.",
+      "category": "bocaditos",
+      "status": "active",
+      "display_order": 10,
+      "is_featured": true,
+      "image": "",
+      "meta_description": "Empanadas artesanales horneadas con masa casera y rellenos tradicionales — Wayka, Costa Rica.",
+      "alt_text": "Bandeja de empanadas doradas recién horneadas sobre una tabla de madera.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 2,
+    "fields": {
+      "name": "Mini Quesadillas",
+      "slug": "mini-quesadillas",
+      "description": "Mini quesadillas suaves y dulces, perfectas para acompañar el café de la tarde.",
+      "category": "bocaditos",
+      "status": "active",
+      "display_order": 20,
+      "is_featured": false,
+      "image": "",
+      "meta_description": "Mini quesadillas dulces y esponjosas, ideales para meriendas y eventos — Wayka.",
+      "alt_text": "Mini quesadillas doradas apiladas en una bandeja.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 3,
+    "fields": {
+      "name": "Bocadillos Mixtos",
+      "slug": "bocadillos-mixtos",
+      "description": "Selección variada de bocadillos para sorprender en tu próximo evento.",
+      "category": "bocaditos",
+      "status": "coming_soon",
+      "display_order": 30,
+      "is_featured": false,
+      "image": "",
+      "meta_description": "Selección variada de bocaditos artesanales para eventos en Costa Rica.",
+      "alt_text": "Bandeja con surtido de bocadillos artesanales.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 4,
+    "fields": {
+      "name": "Pie de Limón",
+      "slug": "pie-de-limon",
+      "description": "Clásico pie de limón con base crujiente y crema suave de limón fresco.",
+      "category": "sweets",
+      "status": "active",
+      "display_order": 10,
+      "is_featured": true,
+      "image": "",
+      "meta_description": "Pie de limón artesanal con crema fresca y base crujiente — Wayka.",
+      "alt_text": "Porción de pie de limón con merengue tostado.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 5,
+    "fields": {
+      "name": "Brownies",
+      "slug": "brownies",
+      "description": "Brownies densos de chocolate semiamargo, con un toque de sal de mar.",
+      "category": "sweets",
+      "status": "active",
+      "display_order": 20,
+      "is_featured": false,
+      "image": "",
+      "meta_description": "Brownies artesanales de chocolate semiamargo con sal de mar — Wayka.",
+      "alt_text": "Pila de brownies de chocolate sobre papel manteca.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 6,
+    "fields": {
+      "name": "Tres Leches",
+      "slug": "tres-leches",
+      "description": "Bizcocho esponjoso bañado en tres leches, terminado con crema y canela.",
+      "category": "sweets",
+      "status": "sold_out",
+      "display_order": 30,
+      "is_featured": false,
+      "image": "",
+      "meta_description": "Tres leches casero, esponjoso y cremoso — Wayka, Costa Rica.",
+      "alt_text": "Porción de tres leches espolvoreada con canela.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 7,
+    "fields": {
+      "name": "Pizza Margarita Artesanal",
+      "slug": "pizza-margarita-artesanal",
+      "description": "Masa madre, salsa de tomate fresco, mozzarella y albahaca — la clásica reinventada.",
+      "category": "pizzas",
+      "status": "active",
+      "display_order": 10,
+      "is_featured": true,
+      "image": "",
+      "meta_description": "Pizza margarita artesanal con masa madre y mozzarella fresca — Wayka.",
+      "alt_text": "Pizza margarita recién horneada con hojas de albahaca.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 8,
+    "fields": {
+      "name": "Pizza Cuatro Quesos",
+      "slug": "pizza-cuatro-quesos",
+      "description": "Combinación cremosa de mozzarella, parmesano, gorgonzola y queso de cabra.",
+      "category": "pizzas",
+      "status": "active",
+      "display_order": 20,
+      "is_featured": false,
+      "image": "",
+      "meta_description": "Pizza cuatro quesos con masa madre — mozzarella, parmesano, gorgonzola y cabra.",
+      "alt_text": "Pizza cuatro quesos con queso derretido y borde dorado.",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 99,
+    "fields": {
+      "name": "Producto Archivado de Prueba",
+      "slug": "producto-archivado-de-prueba",
+      "description": "Producto que ya no se ofrece. Debe estar oculto del sitio público.",
+      "category": "sweets",
+      "status": "inactive",
+      "display_order": 999,
+      "is_featured": false,
+      "image": "",
+      "meta_description": "",
+      "alt_text": "",
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+
+  {
+    "model": "catalog.productvariant",
+    "pk": 1,
+    "fields": {
+      "product": 1,
+      "name": "Docena",
+      "price": "6500.00",
+      "is_default": true,
+      "is_available": true,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 2,
+    "fields": {
+      "product": 1,
+      "name": "Media docena",
+      "price": "3500.00",
+      "is_default": false,
+      "is_available": true,
+      "display_order": 20
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 3,
+    "fields": {
+      "product": 1,
+      "name": "Bandeja familiar (24 uds.)",
+      "price": "12500.00",
+      "is_default": false,
+      "is_available": true,
+      "display_order": 30
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 4,
+    "fields": {
+      "product": 2,
+      "name": "Unidad",
+      "price": "1200.00",
+      "is_default": true,
+      "is_available": true,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 5,
+    "fields": {
+      "product": 3,
+      "name": "Bandeja pequeña",
+      "price": "8500.00",
+      "is_default": true,
+      "is_available": true,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 6,
+    "fields": {
+      "product": 3,
+      "name": "Bandeja grande",
+      "price": "14500.00",
+      "is_default": false,
+      "is_available": true,
+      "display_order": 20
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 7,
+    "fields": {
+      "product": 4,
+      "name": "Porción",
+      "price": "2200.00",
+      "is_default": true,
+      "is_available": true,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 8,
+    "fields": {
+      "product": 5,
+      "name": "Brownie clásico",
+      "price": "1500.00",
+      "is_default": true,
+      "is_available": true,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 9,
+    "fields": {
+      "product": 5,
+      "name": "Brownie con helado",
+      "price": "2800.00",
+      "is_default": false,
+      "is_available": true,
+      "display_order": 20
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 10,
+    "fields": {
+      "product": 6,
+      "name": "Porción",
+      "price": "2400.00",
+      "is_default": true,
+      "is_available": false,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 11,
+    "fields": {
+      "product": 7,
+      "name": "Mediana",
+      "price": "7500.00",
+      "is_default": true,
+      "is_available": true,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 12,
+    "fields": {
+      "product": 7,
+      "name": "Familiar",
+      "price": "11500.00",
+      "is_default": false,
+      "is_available": true,
+      "display_order": 20
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 13,
+    "fields": {
+      "product": 8,
+      "name": "Pequeña",
+      "price": "6500.00",
+      "is_default": false,
+      "is_available": true,
+      "display_order": 10
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 14,
+    "fields": {
+      "product": 8,
+      "name": "Mediana",
+      "price": "8800.00",
+      "is_default": true,
+      "is_available": true,
+      "display_order": 20
+    }
+  },
+  {
+    "model": "catalog.productvariant",
+    "pk": 15,
+    "fields": {
+      "product": 8,
+      "name": "Familiar",
+      "price": "12500.00",
+      "is_default": false,
+      "is_available": false,
+      "display_order": 30
+    }
+  },
+
+  {
+    "model": "catalog.supermarket",
+    "pk": 1,
+    "fields": {
+      "name": "AutoMercado Multiplaza Escazú",
+      "address": "Multiplaza Escazú, San José",
+      "province": "San José",
+      "canton": "Escazú",
+      "latitude": "9.918500",
+      "longitude": "-84.139700",
+      "display_order": 10,
+      "is_active": true,
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.supermarket",
+    "pk": 2,
+    "fields": {
+      "name": "Fresh Market Heredia Centro",
+      "address": "Avenida Central, Heredia",
+      "province": "Heredia",
+      "canton": "Heredia",
+      "latitude": null,
+      "longitude": null,
+      "display_order": 20,
+      "is_active": true,
+      "created_at": "2026-06-08T16:00:00Z",
+      "updated_at": "2026-06-08T16:00:00Z"
+    }
+  }
+]

@@ -44,6 +44,70 @@ review checklist.
   `http://localhost:3000` succeeds; a request from another origin is
   rejected.
 
+### A.5 Catalog app — models, queryset, admin (Phase 2)
+
+Auto (CI) — covered by `python manage.py test`:
+- [x] `test_models.py` — slug auto-gen, collision-resolved
+  uniqueness, preserve-when-set, Spanish-char normalization.
+- [x] `test_models.py` — `Status` and `Category` choice values
+  match the Phase 2 spec literally.
+- [x] `test_models.py` — `is_orderable` is True only for
+  `Status.ACTIVE`.
+- [x] `test_models.py` — `unique_variant_name_per_product`
+  constraint raises `IntegrityError` on duplicate variant names
+  inside a product, but allows the same name across products.
+- [x] `test_models.py` — `default_variant` returns the marked
+  default, falls back to first-by-`display_order` when none flagged,
+  and returns `None` for a variant-less product.
+- [x] `test_models.py` — `Supermarket` saves with optional
+  `latitude` / `longitude` left blank.
+- [x] `test_business_rules.py` — `visible()` excludes only
+  `INACTIVE`.
+- [x] `test_business_rules.py` — `ordered_for_display()` sinks
+  unavailable products to the bottom even when they are
+  `is_featured=True`.
+- [x] `test_business_rules.py` — within the active bucket,
+  `is_featured` comes first; ties broken by `display_order`, then by
+  `name`.
+- [x] `test_business_rules.py` — `for_category(...)` composes with
+  `ordered_for_display()` without leaking other categories.
+- [x] `test_business_rules.py` — `has_multiple_variants` returns
+  False for 0 and 1 variant; True for 2+; updates immediately on
+  delete.
+- [x] `test_admin.py` — anonymous request to
+  `/admin/catalog/product/` redirects to `/admin/login/`.
+- [x] `test_admin.py` — staff superuser can render the changelist
+  and the Spanish status label appears (`"Activo"`).
+- [x] `test_admin.py` — submitting the product add form with two
+  inline variants returns 302 and persists both variants with the
+  right names, prices, and default flag.
+- [x] `test_admin.py` — submitting two variants both flagged
+  `is_default=True` returns 200, persists nothing, and renders the
+  Spanish error message
+  `"Solo una variante puede estar marcada como predeterminada."`.
+
+Manual (your review checklist):
+- [ ] `python manage.py createsuperuser` succeeds locally.
+- [ ] Logging into `/admin/`, the site header reads
+  `"Wayka — Administración"` and all field labels are in Spanish.
+- [ ] In the Product changelist, drag-and-drop reordering of rows
+  actually persists the new `display_order` (JS-dependent; not
+  covered by unit tests).
+- [ ] `python manage.py loaddata sample_catalog` loads 26 objects
+  on a fresh DB; afterwards the admin lists 9 products, 15 variants
+  inline, and 2 supermarkets.
+- [ ] Uploading an image to a product writes it to
+  `backend/media/products/YYYY/MM/...` and renders in the admin
+  change form.
+- [ ] Creating a second product with the same name as an existing
+  product produces a slug suffixed with `-2` (and `-3`, ...) without
+  any human intervention.
+- [ ] The `inactive` fixture product (`producto-archivado-de-prueba`)
+  remains visible in the admin but does NOT appear in
+  `Product.objects.visible()` (verifiable in `manage.py shell`).
+- [ ] A variant marked `is_available=False` still shows up in the
+  admin inline (the gating is presentation-only — no row is hidden).
+
 ---
 
 ## B. Frontend — Next.js + Tailwind + Framer Motion
